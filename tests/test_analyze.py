@@ -3,8 +3,10 @@
 from typing import Any
 
 import pytest
+from homeassistant.components.notify.legacy import NOTIFY_SERVICES
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import area_registry as ar
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 from homeassistant.setup import async_setup_component
 from pytest_homeassistant_custom_component.common import MockConfigEntry
@@ -303,3 +305,60 @@ async def test_websocket_automations(
     (row,) = msg["result"]["automations"]
     assert row["verdict"] == "fails"
     assert row["dependencies"][-1]["reach"] == "cloud"
+
+
+async def test_legacy_notify_service_named_after_device(
+    hass: HomeAssistant, setup
+) -> None:
+    """A legacy notify service is matched to the integration that registered it."""
+
+    class Service:
+        _service_name = "living_room_tv"
+        registered_targets: dict = {}
+
+    hass.data.setdefault(NOTIFY_SERVICES, {})["esphome"] = [Service()]
+    report = await _analyze(
+        hass,
+        {"triggers": [LOCAL_TRIGGER], "actions": [{"action": "notify.living_room_tv"}]},
+    )
+    assert report.verdict is Verdict.WORKS
+    (notify,) = [d for d in report.dependencies if d.kind == "action"]
+    assert notify.entry_id == setup["local"].entry_id
+
+
+async def test_scene_created_at_runtime_is_internal(hass: HomeAssistant, setup) -> None:
+    """A scene that only exists after scene.create is not an unknown dependency."""
+    assert await async_setup_component(hass, "scene", {})
+    report = await _analyze(
+        hass,
+        {
+            "triggers": [LOCAL_TRIGGER],
+            "actions": [
+                {"action": "scene.turn_on", "target": {"entity_id": "scene.before"}}
+            ],
+        },
+    )
+    assert report.verdict is Verdict.WORKS
+
+
+async def test_device_trigger_uses_its_entry(hass: HomeAssistant, setup) -> None:
+    """A device trigger depends on the config entry of the device."""
+    device = dr.async_get(hass).async_get_or_create(
+        config_entry_id=setup["cloud"].entry_id, identifiers={("met", "home")}
+    )
+    report = await _analyze(
+        hass,
+        {
+            "triggers": [
+                {
+                    "trigger": "device",
+                    "device_id": device.id,
+                    "domain": "met",
+                    "type": "anything",
+                }
+            ],
+            "actions": [LOCAL_ACTION],
+        },
+    )
+    (dep,) = [d for d in report.dependencies if d.kind == "device"]
+    assert (dep.reach, dep.entry_id) == (Reach.CLOUD, setup["cloud"].entry_id)

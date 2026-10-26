@@ -14,6 +14,7 @@ from enum import StrEnum
 from typing import Any
 
 from homeassistant.components.automation import DATA_COMPONENT as AUTOMATIONS
+from homeassistant.components.notify.legacy import NOTIFY_SERVICES
 from homeassistant.core import HomeAssistant, split_entity_id
 from homeassistant.helpers import area_registry as ar
 from homeassistant.helpers import device_registry as dr
@@ -106,11 +107,11 @@ class AutomationReport:
 
 
 def _worst(reaches: Iterable[Source]) -> Source:
-    result = (Reach.LOCAL, "iot_class_local", None)
+    result: Source | None = None
     for item in reaches:
-        if _SEVERITY[item[0]] > _SEVERITY[result[0]]:
+        if result is None or _SEVERITY[item[0]] > _SEVERITY[result[0]]:
             result = item
-    return result
+    return result or (Reach.LOCAL, "iot_class_local", None)
 
 
 def _as_list(value: Any) -> list[str]:
@@ -190,10 +191,12 @@ class Analyzer:
         return reach, reason, entry_id
 
     def device_reach(self, device_id: str) -> Source:
-        """Reach of a device: the worst of its config entries."""
+        """Reach of a device through the config entry it belongs to."""
         if (device := self.dev_reg.async_get(device_id)) is None:
             return Reach.UNKNOWN, "device_missing", None
-        return _worst(self._entry(e) for e in device.config_entries)
+        if device.config_entry_id is None:
+            return Reach.UNKNOWN, "entry_missing", None
+        return self._entry(device.config_entry_id)
 
     def area_entities(self, area_id: str) -> set[str]:
         """Entities in an area, directly or through their device."""
@@ -229,6 +232,11 @@ class Analyzer:
                 if "push_url" in app_data:
                     return Reach.CLOUD, "mobile_app_push_relay", entry.entry_id
                 return Reach.UNKNOWN, "mobile_app_no_push", entry.entry_id
+        if domain := self._legacy_notify_owner(name):
+            if entries := self.hass.config_entries.async_entries(domain):
+                return _worst(self._entry(e.entry_id) for e in entries)
+            reach, reason = reach_from_iot_class(self.iot_classes.get(domain))
+            return reach, reason, None
         # Newer integrations offer notify entities.
         if entry := self.ent_reg.async_get(f"notify.{name}"):
             return self.entity_reach(entry.entity_id)
@@ -237,6 +245,20 @@ class Analyzer:
             if name == entry.domain or name.startswith(f"{entry.domain}_"):
                 return self._entry(entry.entry_id)
         return Reach.UNKNOWN, "notify_unknown", None
+
+    def _legacy_notify_owner(self, name: str) -> str | None:
+        """The integration that registered a legacy notify service.
+
+        Their names come from the device or the configuration (e.g. the name of a
+        TV), so they are looked up where the notify component keeps them.
+        """
+        for domain, services in self.hass.data.get(NOTIFY_SERVICES, {}).items():
+            for service in services:
+                if name == getattr(service, "_service_name", None) or name in getattr(
+                    service, "registered_targets", {}
+                ):
+                    return domain
+        return None
 
     # --- walking the configuration --------------------------------------------
 
@@ -350,6 +372,8 @@ async def async_analyze_automations(hass: HomeAssistant) -> list[AutomationRepor
     entries = await async_classify_entries(hass)
     domains = {e.platform for e in er.async_get(hass).entities.values()}
     domains |= {split_entity_id(s)[0] for s in hass.states.async_entity_ids()}
+    # Loaded integrations cover entities that do not exist yet, e.g. from scene.create.
+    domains |= {c.partition(".")[0] for c in hass.config.components}
     integrations = await async_get_integrations(hass, domains)
     iot_classes = {d: effective_iot_class(i) for d, i in integrations.items()}
     analyzer = Analyzer(hass, entries, iot_classes)
