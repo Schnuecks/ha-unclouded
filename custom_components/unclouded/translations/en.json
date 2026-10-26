@@ -1,0 +1,13 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Set up Unclouded",
+        "description": "Unclouded shows which parts of your Home Assistant need the internet. It only reads, it never changes anything."
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "Unclouded is already set up."
+    }
+  }
+}
