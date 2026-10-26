@@ -1,6 +1,10 @@
 {
   "domain": "unclouded",
   "name": "Unclouded",
+  "after_dependencies": [
+    "automation",
+    "script"
+  ],
   "codeowners": [
     "@Schnuecks"
   ],

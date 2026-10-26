@@ -52,6 +52,22 @@ def reach_from_iot_class(iot_class: str | None) -> tuple[Reach, str]:
     return Reach.UNKNOWN, "iot_class_missing"
 
 
+def effective_iot_class(integration: object) -> str | None:
+    """The iot_class of an integration, if it could be loaded.
+
+    Built-in helpers like script, scene or input_boolean declare none; they only work
+    with what is inside Home Assistant.
+    """
+    iot_class = getattr(integration, "iot_class", None)
+    if (
+        iot_class is None
+        and getattr(integration, "is_built_in", False)
+        and getattr(integration, "quality_scale", None) == "internal"
+    ):
+        return "calculated"
+    return iot_class
+
+
 def _sonoff(entry: ConfigEntry) -> tuple[Reach, str]:
     # "auto" talks to devices in the LAN first and only falls back to the cloud for
     # devices without LAN control, which the entry does not record.
@@ -98,9 +114,8 @@ async def async_classify_entries(hass: HomeAssistant) -> list[EntryReach]:
     integrations = await async_get_integrations(hass, {e.domain for e in entries})
     result = []
     for entry in entries:
-        integration = integrations.get(entry.domain)
         # A missing custom integration comes back as an exception.
-        iot_class = getattr(integration, "iot_class", None)
+        iot_class = effective_iot_class(integrations.get(entry.domain))
         if rule := ENTRY_RULES.get(entry.domain):
             reach, reason = rule(entry)
         else:
