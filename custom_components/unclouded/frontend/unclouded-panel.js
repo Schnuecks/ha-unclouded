@@ -25,7 +25,12 @@ const STRINGS = {
     choice_cloud: "Cloud",
     choice_partial: "Partly local",
     yourChoice: "your choice",
+    decided: "Decided by you",
+    decidedHint: "You classified these integrations yourself. You can change it here at any time.",
     integrationNoEntry: "entities without config entry",
+    savedOverride: "Saved. The automations have been checked again.",
+    savedImportant: "Marked as important. If it needs the internet, it is listed under Settings → Repairs.",
+    savedUnimportant: "No longer marked as important.",
     none: "None.",
     part_trigger: "Trigger",
     part_condition: "Condition",
@@ -86,7 +91,12 @@ const STRINGS = {
     choice_cloud: "Cloud",
     choice_partial: "Teilweise lokal",
     yourChoice: "deine Wahl",
+    decided: "Von dir festgelegt",
+    decidedHint: "Diese Integrationen hast du selbst eingestuft. Hier kannst du es jederzeit ändern.",
     integrationNoEntry: "Entitäten ohne Einrichtung",
+    savedOverride: "Gespeichert. Die Automationen wurden neu bewertet.",
+    savedImportant: "Als wichtig markiert. Braucht sie Internet, steht sie unter Einstellungen → Reparaturen.",
+    savedUnimportant: "Nicht mehr als wichtig markiert.",
     none: "Keine.",
     part_trigger: "Auslöser",
     part_condition: "Bedingung",
@@ -315,16 +325,20 @@ class UncloudedPanel extends HTMLElement {
         chosen: this._overrides[`domain:${domain}`] || "",
       });
     if (!rows.length) return "";
+    const open = rows.filter((r) => !r.chosen).length;
+    const title = open ? `${t.decide} · ${open}` : t.decided;
     return `
-      <section class="card decide">
-        <h2>${esc(t.decide)} · ${rows.length}</h2>
-        <p class="muted">${esc(t.decideHint)}</p>
+      <section class="card${open ? " decide" : ""}">
+        <h2>${esc(title)}</h2>
+        <p class="muted">${esc(open ? t.decideHint : t.decidedHint)}</p>
         <table>${rows
           .map(
             (r) => `
           <tr>
             <td>${esc(r.label)}<div class="muted">${esc(r.sub)}</div></td>
-            <td>${this._renderChoice(r.key, "unknown", r.chosen)}</td>
+            <td>${this._renderChoice(r.key, "unknown", r.chosen)}${
+              r.chosen ? `<div class="mine">✓ ${esc(t.yourChoice)}</div>` : ""
+            }</td>
           </tr>`
           )
           .join("")}</table>
@@ -332,14 +346,20 @@ class UncloudedPanel extends HTMLElement {
   }
 
   async _setOverride(key, reach) {
-    await this._send({ type: "unclouded/set_override", key, reach: reach || null });
+    await this._send(
+      { type: "unclouded/set_override", key, reach: reach || null },
+      this._t.savedOverride
+    );
   }
 
   async _setImportant(entityId, important) {
-    await this._send({ type: "unclouded/set_important", entity_id: entityId, important });
+    await this._send(
+      { type: "unclouded/set_important", entity_id: entityId, important },
+      important ? this._t.savedImportant : this._t.savedUnimportant
+    );
   }
 
-  async _send(message) {
+  async _send(message, confirmation) {
     try {
       await this._hass.callWS(message);
     } catch (err) {
@@ -348,6 +368,14 @@ class UncloudedPanel extends HTMLElement {
       return;
     }
     await this._load();
+    // Home Assistant shows this as a toast at the bottom of the screen.
+    this.dispatchEvent(
+      new CustomEvent("hass-notification", {
+        detail: { message: confirmation },
+        bubbles: true,
+        composed: true,
+      })
+    );
   }
 
   _renderEntries() {
@@ -361,7 +389,9 @@ class UncloudedPanel extends HTMLElement {
         (e) => `
         <tr>
           <td>${esc(e.title)}<div class="muted">${esc(e.domain)}</div></td>
-          <td>${this._renderChoice(`entry:${e.entry_id}`, e.automatic, e.overridden ? e.reach : "")}</td>
+          <td>${this._renderChoice(`entry:${e.entry_id}`, e.automatic, e.overridden ? e.reach : "")}${
+            e.overridden ? `<div class="mine">✓ ${esc(t.yourChoice)}</div>` : ""
+          }</td>
           <td class="muted">${esc(this._reason(e.reason))}</td>
         </tr>`
       )
@@ -477,6 +507,7 @@ const STYLE = `
   select.choice { font: inherit; font-size: 13px; padding: 4px 6px; color: inherit; max-width: 100%;
     background: var(--secondary-background-color); border: 1px solid var(--divider-color); border-radius: 6px; }
   select.choice.chosen { border-color: var(--primary-color); }
+  .mine { font-size: 12px; color: var(--primary-color); margin-top: 2px; }
   .card.decide { border-color: var(--warning-color, #ff9800); }
   #entries > summary h2::before { content: "▸"; color: var(--secondary-text-color); }
   #entries[open] > summary h2::before { content: "▾"; }
