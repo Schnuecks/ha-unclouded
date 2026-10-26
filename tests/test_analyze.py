@@ -363,3 +363,111 @@ async def test_device_trigger_uses_its_entry(hass: HomeAssistant, setup) -> None
     )
     (dep,) = [d for d in report.dependencies if d.kind == "device"]
     assert (dep.reach, dep.entry_id) == (Reach.CLOUD, setup["cloud"].entry_id)
+
+
+async def _template_sensor(hass: HomeAssistant, state: str, **extra) -> None:
+    assert await async_setup_component(
+        hass,
+        "template",
+        {"template": [{"sensor": [{"name": "Mix", "state": state, **extra}]}]},
+    )
+    await hass.async_block_till_done()
+
+
+@pytest.mark.parametrize("unique_id", [{}, {"unique_id": "mix"}])
+async def test_yaml_template_follows_its_sources(
+    hass: HomeAssistant, setup, unique_id: dict
+) -> None:
+    """A template sensor from YAML is as dependent as the entities it reads."""
+    await _template_sensor(
+        hass,
+        "{{ states('sensor.local_temp') }} {{ states('sensor.cloud_temp') }}",
+        **unique_id,
+    )
+    report = await _analyze(
+        hass,
+        {
+            "triggers": [{"trigger": "state", "entity_id": "sensor.mix"}],
+            "actions": [LOCAL_ACTION],
+        },
+    )
+    assert report.verdict is Verdict.FAILS
+    (dep,) = [d for d in report.dependencies if d.ref == "sensor.mix"]
+    assert dep.entry_id == setup["cloud"].entry_id
+
+
+async def test_local_template_stays_local(hass: HomeAssistant, setup) -> None:
+    """A template over local entities does not need the internet."""
+    await _template_sensor(hass, "{{ states('sensor.local_temp') | float(0) * 2 }}")
+    report = await _analyze(
+        hass,
+        {
+            "triggers": [{"trigger": "state", "entity_id": "sensor.mix"}],
+            "actions": [LOCAL_ACTION],
+        },
+    )
+    assert report.verdict is Verdict.WORKS
+
+
+async def test_ui_helper_reads_its_entry(hass: HomeAssistant, setup) -> None:
+    """A helper set up in the UI names its source in the config entry."""
+    helper = MockConfigEntry(
+        domain="derivative", options={"source": "sensor.cloud_temp", "round": 2}
+    )
+    helper.add_to_hass(hass)
+    er.async_get(hass).async_get_or_create(
+        "sensor", "derivative", "rate", suggested_object_id="rate", config_entry=helper
+    )
+    hass.states.async_set("sensor.rate", "0")
+    report = await _analyze(
+        hass,
+        {
+            "triggers": [{"trigger": "state", "entity_id": "sensor.rate"}],
+            "actions": [LOCAL_ACTION],
+        },
+    )
+    assert report.verdict is Verdict.FAILS
+
+
+async def test_ui_template_helper_renders_its_template(
+    hass: HomeAssistant, setup
+) -> None:
+    """A template helper from the UI keeps its template in the entry options."""
+    helper = MockConfigEntry(
+        domain="template",
+        options={
+            "template_type": "sensor",
+            "state": "{{ states('sensor.cloud_temp') }}",
+        },
+    )
+    helper.add_to_hass(hass)
+    er.async_get(hass).async_get_or_create(
+        "sensor", "template", "ui", suggested_object_id="ui", config_entry=helper
+    )
+    hass.states.async_set("sensor.ui", "1")
+    report = await _analyze(
+        hass,
+        {
+            "triggers": [{"trigger": "state", "entity_id": "sensor.ui"}],
+            "actions": [LOCAL_ACTION],
+        },
+    )
+    assert report.verdict is Verdict.FAILS
+
+
+async def test_helpers_referring_to_each_other_terminate(
+    hass: HomeAssistant, setup
+) -> None:
+    """Two helpers reading each other do not loop forever."""
+    reg = er.async_get(hass)
+    for name, other in (("a", "b"), ("b", "a")):
+        reg.async_get_or_create("sensor", "group", name, suggested_object_id=name)
+        hass.states.async_set(f"sensor.{name}", "1", {"entity_id": [f"sensor.{other}"]})
+    report = await _analyze(
+        hass,
+        {
+            "triggers": [{"trigger": "state", "entity_id": "sensor.a"}],
+            "actions": [LOCAL_ACTION],
+        },
+    )
+    assert report.verdict is Verdict.WORKS
