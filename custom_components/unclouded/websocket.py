@@ -10,7 +10,7 @@ from homeassistant.components import websocket_api
 from homeassistant.core import HomeAssistant, callback
 
 from .analyze import async_analyze_automations
-from .classify import async_classify_entries
+from .classify import async_can_override, async_classify_entries
 from .const import DOMAIN
 from .repairs import async_update_issues
 from .settings import (
@@ -74,12 +74,17 @@ async def ws_automations(
 async def ws_set_override(
     hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
 ) -> None:
-    """Classify a config entry or an integration by hand."""
+    """Classify a config entry or an integration that Unclouded cannot classify."""
     settings = async_get_settings(hass)
     if msg["reach"] is None:
         settings.overrides.pop(msg["key"], None)
-    else:
+    elif await async_can_override(hass, msg["key"]):
         settings.overrides[msg["key"]] = msg["reach"]
+    else:
+        connection.send_error(
+            msg["id"], "not_unknown", "Only unknown integrations can be classified"
+        )
+        return
     prune(
         settings, (entry_key(e.entry_id) for e in hass.config_entries.async_entries())
     )

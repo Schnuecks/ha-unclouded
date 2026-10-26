@@ -53,13 +53,61 @@ async def _send(hass_ws_client, hass: HomeAssistant, message: dict) -> dict:
     return await client.receive_json()
 
 
-async def test_override_of_an_entry(hass: HomeAssistant, hass_ws_client) -> None:
-    """A cloud integration the user knows to be local counts as local."""
+async def test_override_of_an_unknown_entry(
+    hass: HomeAssistant, hass_ws_client
+) -> None:
+    """An integration that does not say how it connects can be classified by hand."""
+    unknown = MockConfigEntry(domain="custom_thing", title="Plant")
+    unknown.add_to_hass(hass)
+    er.async_get(hass).async_get_or_create(
+        "sensor", "custom_thing", "m", suggested_object_id="m", config_entry=unknown
+    )
+    await _setup(hass, [LAMP], "sensor.m")
+    (report,) = await async_analyze_automations(hass)
+    assert report.verdict is Verdict.UNKNOWN
+
+    msg = await _send(
+        hass_ws_client,
+        hass,
+        {
+            "type": f"{DOMAIN}/set_override",
+            "key": f"entry:{unknown.entry_id}",
+            "reach": "local",
+        },
+    )
+    assert msg["success"]
+    (report,) = await async_analyze_automations(hass)
+    assert report.verdict is Verdict.WORKS
+
+    settings = async_get_settings(hass)
+    entries = await async_classify_entries(hass, settings.overrides)
+    (row,) = [e for e in entries if e.entry_id == unknown.entry_id]
+    assert (row.reach, row.automatic, row.overridden, row.reason) == (
+        Reach.LOCAL,
+        Reach.UNKNOWN,
+        True,
+        "user_override",
+    )
+
+    # Back to unknown.
+    await _send(
+        hass_ws_client,
+        hass,
+        {
+            "type": f"{DOMAIN}/set_override",
+            "key": f"entry:{unknown.entry_id}",
+            "reach": None,
+        },
+    )
+    assert async_get_settings(hass).overrides == {}
+
+
+async def test_known_entry_cannot_be_overridden(
+    hass: HomeAssistant, hass_ws_client
+) -> None:
+    """What Unclouded found out is not up for a vote."""
     await _setup(hass, [LAMP], "sensor.w")
     cloud = hass.config_entries.async_entries("met")[0]
-    (report,) = await async_analyze_automations(hass)
-    assert report.verdict is Verdict.FAILS
-
     msg = await _send(
         hass_ws_client,
         hass,
@@ -69,33 +117,30 @@ async def test_override_of_an_entry(hass: HomeAssistant, hass_ws_client) -> None
             "reach": "local",
         },
     )
-    assert msg["success"]
-    (report,) = await async_analyze_automations(hass)
-    assert report.verdict is Verdict.WORKS
-    entries = {e.entry_id: e for e in await async_classify_entries(hass, {})}
-    assert entries[cloud.entry_id].reach is Reach.CLOUD
+    assert not msg["success"]
+    assert msg["error"]["code"] == "not_unknown"
+    assert async_get_settings(hass).overrides == {}
 
-    settings = async_get_settings(hass)
-    entries = await async_classify_entries(hass, settings.overrides)
-    (row,) = [e for e in entries if e.entry_id == cloud.entry_id]
-    assert (row.reach, row.automatic, row.overridden) == (
-        Reach.LOCAL,
-        Reach.CLOUD,
-        True,
-    )
-    assert row.reason == "user_override"
 
-    # Back to automatic.
-    await _send(
-        hass_ws_client,
-        hass,
-        {
-            "type": f"{DOMAIN}/set_override",
-            "key": f"entry:{cloud.entry_id}",
-            "reach": None,
+async def test_stale_override_is_ignored(hass: HomeAssistant) -> None:
+    """A choice stored earlier no longer counts once the integration is known."""
+    await _setup(hass, [LAMP], "sensor.w")
+    cloud = hass.config_entries.async_entries("met")[0]
+    entry = hass.config_entries.async_entries(DOMAIN)[0]
+    hass.config_entries.async_update_entry(
+        entry,
+        options={
+            "overrides": {f"entry:{cloud.entry_id}": "local", "domain:light": "cloud"}
         },
     )
-    assert async_get_settings(hass).overrides == {}
+    (report,) = await async_analyze_automations(hass)
+    assert report.verdict is Verdict.FAILS
+    (row,) = [
+        e
+        for e in await async_classify_entries(hass, async_get_settings(hass).overrides)
+        if e.entry_id == cloud.entry_id
+    ]
+    assert (row.reach, row.overridden) == (Reach.CLOUD, False)
 
 
 async def test_override_of_an_integration_without_entry(

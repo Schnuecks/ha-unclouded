@@ -267,9 +267,12 @@ class Analyzer:
 
     def _integration(self, domain: str) -> Source:
         """Reach of an entity that belongs to no config entry."""
-        if chosen := self.overrides.get(domain_key(domain)):
-            return Reach(chosen), "user_override", None
         reach, reason = reach_from_iot_class(self.iot_classes.get(domain))
+        # The user only fills gaps: a choice counts while nothing else is known.
+        if reach is Reach.UNKNOWN and (
+            chosen := self.overrides.get(domain_key(domain))
+        ):
+            return Reach(chosen), "user_override", None
         return reach, reason, None
 
     def integration_of(self, entity_id: str) -> str:

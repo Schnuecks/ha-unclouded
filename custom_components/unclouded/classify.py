@@ -131,7 +131,9 @@ async def async_classify_entries(
         else:
             reach, reason = reach_from_iot_class(iot_class)
         automatic = reach
-        if chosen := overrides.get(entry_key(entry.entry_id)):
+        # The user only fills gaps: a choice counts while nothing else is known.
+        chosen = overrides.get(entry_key(entry.entry_id))
+        if chosen and automatic is Reach.UNKNOWN:
             reach, reason = Reach(chosen), "user_override"
         result.append(
             EntryReach(
@@ -142,7 +144,21 @@ async def async_classify_entries(
                 reach=reach,
                 reason=reason,
                 automatic=automatic,
-                overridden=bool(chosen),
+                overridden=reason == "user_override",
             )
         )
     return sorted(result, key=lambda r: (r.domain, r.title))
+
+
+async def async_can_override(hass: HomeAssistant, key: str) -> bool:
+    """Whether the user may classify this entry or integration: only when unknown."""
+    kind, _, ref = key.partition(":")
+    if kind == "entry":
+        entry = hass.config_entries.async_get_entry(ref)
+        if entry is None:
+            return False
+        (result,) = [r for r in await async_classify_entries(hass) if r.entry_id == ref]
+        return result.automatic is Reach.UNKNOWN
+    integrations = await async_get_integrations(hass, {ref})
+    iot_class = effective_iot_class(integrations.get(ref))
+    return reach_from_iot_class(iot_class)[0] is Reach.UNKNOWN

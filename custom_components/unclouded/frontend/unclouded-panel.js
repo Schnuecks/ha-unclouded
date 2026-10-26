@@ -20,7 +20,7 @@ const STRINGS = {
     decide: "Please decide",
     decideHint:
       "These integrations do not say how they connect. If you know, choose it here; the automations are judged again right away.",
-    automatic: "Automatic",
+    notChosen: "Unknown – choose…",
     choice_local: "Local",
     choice_cloud: "Cloud",
     choice_partial: "Partly local",
@@ -37,7 +37,7 @@ const STRINGS = {
     part_action: "Action",
     via: "via",
     integrations: "Integrations",
-    integrationsHint: "How each set-up integration connects. Automations are judged on this basis.",
+    integrationsHint: "How each set-up integration connects, as found out by Unclouded. Automations are judged on this basis.",
     reach_cloud: "Cloud",
     reach_partial: "Partly local",
     reach_unknown: "Unknown",
@@ -86,7 +86,7 @@ const STRINGS = {
     decide: "Bitte festlegen",
     decideHint:
       "Diese Integrationen geben nicht an, wie sie sich verbinden. Wenn du es weißt, wähle es hier; die Automationen werden sofort neu bewertet.",
-    automatic: "Automatisch",
+    notChosen: "Unbekannt – wählen …",
     choice_local: "Lokal",
     choice_cloud: "Cloud",
     choice_partial: "Teilweise lokal",
@@ -103,7 +103,7 @@ const STRINGS = {
     part_action: "Aktion",
     via: "über",
     integrations: "Integrationen",
-    integrationsHint: "Wie sich jede eingerichtete Integration verbindet. Darauf beruht die Bewertung der Automationen.",
+    integrationsHint: "Wie sich jede eingerichtete Integration verbindet, so wie Unclouded es ermittelt hat. Darauf beruht die Bewertung der Automationen.",
     reach_cloud: "Cloud",
     reach_partial: "Teilweise lokal",
     reach_unknown: "Unbekannt",
@@ -288,11 +288,11 @@ class UncloudedPanel extends HTMLElement {
     return `<div class="tiles">${tiles}</div>${sections}`;
   }
 
-  // Select between what Unclouded found out and a choice of the user.
-  _renderChoice(key, automatic, chosen) {
+  // Only offered where Unclouded could not find out anything by itself.
+  _renderChoice(key, chosen) {
     const t = this._t;
     const options = [
-      `<option value="">${esc(t.automatic)}: ${esc(t[`reach_${automatic}`])}</option>`,
+      `<option value="">${esc(t.notChosen)}</option>`,
       ...["local", "cloud", "partial"].map(
         (r) => `<option value="${r}"${chosen === r ? " selected" : ""}>${esc(t[`choice_${r}`])}</option>`
       ),
@@ -336,7 +336,7 @@ class UncloudedPanel extends HTMLElement {
             (r) => `
           <tr>
             <td>${esc(r.label)}<div class="muted">${esc(r.sub)}</div></td>
-            <td>${this._renderChoice(r.key, "unknown", r.chosen)}${
+            <td>${this._renderChoice(r.key, r.chosen)}${
               r.chosen ? `<div class="mine">✓ ${esc(t.yourChoice)}</div>` : ""
             }</td>
           </tr>`
@@ -389,7 +389,7 @@ class UncloudedPanel extends HTMLElement {
         (e) => `
         <tr>
           <td>${esc(e.title)}<div class="muted">${esc(e.domain)}</div></td>
-          <td>${this._renderChoice(`entry:${e.entry_id}`, e.automatic, e.overridden ? e.reach : "")}${
+          <td><span class="badge ${esc(e.reach)}">${esc(t[`reach_${e.reach}`])}</span>${
             e.overridden ? `<div class="mine">✓ ${esc(t.yourChoice)}</div>` : ""
           }</td>
           <td class="muted">${esc(this._reason(e.reason))}</td>
