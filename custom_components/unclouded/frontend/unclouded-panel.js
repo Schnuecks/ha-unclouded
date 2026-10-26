@@ -15,6 +15,17 @@ const STRINGS = {
     hint_works: "These only use things inside your home.",
     onlyNotifications: "only notifications",
     open: "Open",
+    markImportant: "Mark as important: Home Assistant then reports under Repairs when it needs the internet",
+    unmarkImportant: "Marked as important; click to remove",
+    decide: "Please decide",
+    decideHint:
+      "These integrations do not say how they connect. If you know, choose it here; the automations are judged again right away.",
+    automatic: "Automatic",
+    choice_local: "Local",
+    choice_cloud: "Cloud",
+    choice_partial: "Partly local",
+    yourChoice: "your choice",
+    integrationNoEntry: "entities without config entry",
     none: "None.",
     part_trigger: "Trigger",
     part_condition: "Condition",
@@ -49,6 +60,7 @@ const STRINGS = {
       notify_unknown: "could not find out which integration sends this",
       entry_missing: "the integration behind it is no longer set up",
       device_missing: "the device no longer exists",
+      user_override: "chosen by you",
     },
   },
   de: {
@@ -64,6 +76,17 @@ const STRINGS = {
     hint_works: "Diese nutzen nur, was bei dir zu Hause ist.",
     onlyNotifications: "nur Benachrichtigungen",
     open: "Öffnen",
+    markImportant: "Als wichtig markieren: Home Assistant meldet dann unter Reparaturen, wenn sie Internet braucht",
+    unmarkImportant: "Als wichtig markiert; Klick nimmt die Markierung weg",
+    decide: "Bitte festlegen",
+    decideHint:
+      "Diese Integrationen geben nicht an, wie sie sich verbinden. Wenn du es weißt, wähle es hier; die Automationen werden sofort neu bewertet.",
+    automatic: "Automatisch",
+    choice_local: "Lokal",
+    choice_cloud: "Cloud",
+    choice_partial: "Teilweise lokal",
+    yourChoice: "deine Wahl",
+    integrationNoEntry: "Entitäten ohne Einrichtung",
     none: "Keine.",
     part_trigger: "Auslöser",
     part_condition: "Bedingung",
@@ -98,6 +121,7 @@ const STRINGS = {
       notify_unknown: "unklar, welche Integration das verschickt",
       entry_missing: "die Integration dahinter ist nicht mehr eingerichtet",
       device_missing: "das Gerät gibt es nicht mehr",
+      user_override: "von dir festgelegt",
     },
   },
 };
@@ -118,6 +142,7 @@ class UncloudedPanel extends HTMLElement {
     this.attachShadow({ mode: "open" });
     this._automations = null;
     this._entries = [];
+    this._overrides = {};
     this._error = null;
     this._open = new Set();
   }
@@ -150,6 +175,7 @@ class UncloudedPanel extends HTMLElement {
       ]);
       this._automations = automations.automations;
       this._entries = entries.entries;
+      this._overrides = entries.overrides || {};
       this._error = null;
     } catch (err) {
       this._error = err.message || String(err);
@@ -210,7 +236,9 @@ class UncloudedPanel extends HTMLElement {
     const flag = automation.only_notifications
       ? `<span class="badge note">${esc(t.onlyNotifications)}</span>`
       : "";
-    const row = `<span class="name">${esc(automation.name)}</span>${flag}${link}`;
+    const star = `<button class="star${automation.important ? " on" : ""}" data-important="${esc(automation.entity_id)}"
+      title="${esc(automation.important ? t.unmarkImportant : t.markImportant)}">${automation.important ? "★" : "☆"}</button>`;
+    const row = `${star}<span class="name">${esc(automation.name)}</span>${flag}${link}`;
     if (!problems.length) return `<li class="automation"><div class="row">${row}</div></li>`;
     const open = this._open.has(automation.entity_id) ? " open" : "";
     return `
@@ -250,6 +278,78 @@ class UncloudedPanel extends HTMLElement {
     return `<div class="tiles">${tiles}</div>${sections}`;
   }
 
+  // Select between what Unclouded found out and a choice of the user.
+  _renderChoice(key, automatic, chosen) {
+    const t = this._t;
+    const options = [
+      `<option value="">${esc(t.automatic)}: ${esc(t[`reach_${automatic}`])}</option>`,
+      ...["local", "cloud", "partial"].map(
+        (r) => `<option value="${r}"${chosen === r ? " selected" : ""}>${esc(t[`choice_${r}`])}</option>`
+      ),
+    ];
+    return `<select class="choice${chosen ? " chosen" : ""}" data-override="${esc(key)}">${options.join("")}</select>`;
+  }
+
+  // Integrations nobody could classify: entries without iot_class and integrations
+  // whose entities have no config entry. Ones already chosen stay listed to change them.
+  _renderDecide() {
+    const t = this._t;
+    const rows = this._entries
+      .filter((e) => e.automatic === "unknown")
+      .map((e) => ({
+        key: `entry:${e.entry_id}`,
+        label: e.title,
+        sub: e.domain,
+        chosen: e.overridden ? e.reach : "",
+      }));
+    const domains = new Set();
+    for (const a of this._automations)
+      for (const d of a.dependencies)
+        if (d.integration && (d.reach === "unknown" || this._overrides[`domain:${d.integration}`]))
+          domains.add(d.integration);
+    for (const domain of [...domains].sort())
+      rows.push({
+        key: `domain:${domain}`,
+        label: domain,
+        sub: t.integrationNoEntry,
+        chosen: this._overrides[`domain:${domain}`] || "",
+      });
+    if (!rows.length) return "";
+    return `
+      <section class="card decide">
+        <h2>${esc(t.decide)} · ${rows.length}</h2>
+        <p class="muted">${esc(t.decideHint)}</p>
+        <table>${rows
+          .map(
+            (r) => `
+          <tr>
+            <td>${esc(r.label)}<div class="muted">${esc(r.sub)}</div></td>
+            <td>${this._renderChoice(r.key, "unknown", r.chosen)}</td>
+          </tr>`
+          )
+          .join("")}</table>
+      </section>`;
+  }
+
+  async _setOverride(key, reach) {
+    await this._send({ type: "unclouded/set_override", key, reach: reach || null });
+  }
+
+  async _setImportant(entityId, important) {
+    await this._send({ type: "unclouded/set_important", entity_id: entityId, important });
+  }
+
+  async _send(message) {
+    try {
+      await this._hass.callWS(message);
+    } catch (err) {
+      this._error = err.message || String(err);
+      this._render();
+      return;
+    }
+    await this._load();
+  }
+
   _renderEntries() {
     const t = this._t;
     const rows = [...this._entries]
@@ -261,7 +361,7 @@ class UncloudedPanel extends HTMLElement {
         (e) => `
         <tr>
           <td>${esc(e.title)}<div class="muted">${esc(e.domain)}</div></td>
-          <td><span class="badge ${esc(e.reach)}">${esc(t[`reach_${e.reach}`])}</span></td>
+          <td>${this._renderChoice(`entry:${e.entry_id}`, e.automatic, e.overridden ? e.reach : "")}</td>
           <td class="muted">${esc(this._reason(e.reason))}</td>
         </tr>`
       )
@@ -278,7 +378,8 @@ class UncloudedPanel extends HTMLElement {
     const t = this._t;
     let body = "";
     if (this._error) body = `<p class="error">${esc(t.error)}: ${esc(this._error)}</p>`;
-    else if (this._automations) body = this._renderVerdicts() + this._renderEntries();
+    else if (this._automations)
+      body = this._renderDecide() + this._renderVerdicts() + this._renderEntries();
     else body = `<p class="muted">…</p>`;
     this.shadowRoot.innerHTML = `
       <style>${STYLE}</style>
@@ -310,6 +411,17 @@ class UncloudedPanel extends HTMLElement {
         e.preventDefault();
         $(el.getAttribute("href"))?.scrollIntoView({ behavior: "smooth" });
       })
+    );
+    this.shadowRoot.querySelectorAll("button[data-important]").forEach((el) =>
+      el.addEventListener("click", (e) => {
+        // The star sits in the summary; keep it from opening the details.
+        e.preventDefault();
+        e.stopPropagation();
+        this._setImportant(el.dataset.important, !el.classList.contains("on"));
+      })
+    );
+    this.shadowRoot.querySelectorAll("select[data-override]").forEach((el) =>
+      el.addEventListener("change", () => this._setOverride(el.dataset.override, el.value))
     );
     this.shadowRoot.querySelectorAll("details[data-id]").forEach((el) =>
       el.addEventListener("toggle", () => {
@@ -359,6 +471,13 @@ const STYLE = `
   li.automation summary::before { content: "▸"; width: 10px; color: var(--secondary-text-color); }
   li.automation details[open] summary::before { content: "▾"; }
   .tile.empty { opacity: .55; }
+  button.star { font: inherit; font-size: 18px; line-height: 1; border: 0; background: transparent;
+    padding: 0 2px; cursor: pointer; color: var(--secondary-text-color); align-self: center; }
+  button.star.on { color: var(--warning-color, #ff9800); }
+  select.choice { font: inherit; font-size: 13px; padding: 4px 6px; color: inherit; max-width: 100%;
+    background: var(--secondary-background-color); border: 1px solid var(--divider-color); border-radius: 6px; }
+  select.choice.chosen { border-color: var(--primary-color); }
+  .card.decide { border-color: var(--warning-color, #ff9800); }
   #entries > summary h2::before { content: "▸"; color: var(--secondary-text-color); }
   #entries[open] > summary h2::before { content: "▾"; }
   ul.deps { margin: 6px 0 0 18px; font-size: 14px; }

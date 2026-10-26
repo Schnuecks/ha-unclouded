@@ -84,3 +84,10 @@ async def test_rule_overrides_iot_class(hass: HomeAssistant) -> None:
     result = await _classify(hass, MockConfigEntry(domain="mobile_app"))
     assert result.iot_class == "local_push"
     assert result.reach is Reach.PARTIAL
+
+
+async def test_built_in_hardware_is_local(hass: HomeAssistant) -> None:
+    """A USB adapter declares no iot_class but sits in the host."""
+    result = await _classify(hass, MockConfigEntry(domain="homeassistant_connect_zbt2"))
+    assert result.iot_class == "local_polling"
+    assert result.reach is Reach.LOCAL

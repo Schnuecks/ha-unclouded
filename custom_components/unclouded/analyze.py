@@ -32,6 +32,7 @@ from .classify import (
     effective_iot_class,
     reach_from_iot_class,
 )
+from .settings import async_get_settings, domain_key
 
 
 class Part(StrEnum):
@@ -102,6 +103,8 @@ class Dependency:
     reason: str
     entry_id: str | None = None
     notification: bool = False
+    # Integration behind an entity without config entry, so the user can classify it.
+    integration: str | None = None
 
 
 @dataclass(slots=True)
@@ -116,6 +119,8 @@ class AutomationReport:
     # True when everything that needs the internet only sends notifications.
     only_notifications: bool
     dependencies: list[Dependency] = field(default_factory=list)
+    # Marked by the user as one to be told about.
+    important: bool = False
 
 
 def _worst(reaches: Iterable[Source]) -> Source:
@@ -144,12 +149,14 @@ class Analyzer:
         entries: list[EntryReach],
         iot_classes: dict[str, str | None],
         helpers: set[str],
+        overrides: Mapping[str, str] | None = None,
     ) -> None:
         self.hass = hass
         self.entries = {e.entry_id: e for e in entries}
         self.iot_classes = iot_classes
         # Integrations computing entities from others (template, derivative, …).
         self.helpers = helpers
+        self.overrides = overrides or {}
         self._platform_entities: dict[str, dict[str, Any]] = {}
         self.ent_reg = er.async_get(hass)
         self.dev_reg = dr.async_get(hass)
@@ -186,13 +193,9 @@ class Analyzer:
             if entry.config_entry_id:
                 result = self._entry(entry.config_entry_id)
             else:
-                reach, reason = reach_from_iot_class(
-                    self.iot_classes.get(entry.platform)
-                )
-                result = (reach, reason, None)
+                result = self._integration(entry.platform)
         else:
-            reach, reason = reach_from_iot_class(self.iot_classes.get(domain))
-            result = (reach, reason, None)
+            result = self._integration(domain)
 
         # Helpers are as dependent as the entities they are computed from.
         if (result[0] is Reach.INTERNAL or platform in self.helpers) and (
@@ -261,6 +264,19 @@ class Analyzer:
             if entity := self._platform_entities[name].get(entity_id):
                 return entity
         return None
+
+    def _integration(self, domain: str) -> Source:
+        """Reach of an entity that belongs to no config entry."""
+        if chosen := self.overrides.get(domain_key(domain)):
+            return Reach(chosen), "user_override", None
+        reach, reason = reach_from_iot_class(self.iot_classes.get(domain))
+        return reach, reason, None
+
+    def integration_of(self, entity_id: str) -> str:
+        """Integration providing an entity."""
+        if entry := self.ent_reg.async_get(entity_id):
+            return entry.platform
+        return split_entity_id(entity_id)[0]
 
     def _tracker_reach(self, entity_id: str, seen: frozenset[str]) -> Source:
         reach, reason, entry_id = self.entity_reach(entity_id, seen)
@@ -386,7 +402,12 @@ class Analyzer:
         if "." not in entity_id:
             return
         reach, reason, entry_id = self.entity_reach(entity_id)
-        deps.append(Dependency(part, "entity", entity_id, reach, reason, entry_id))
+        integration = None if entry_id else self.integration_of(entity_id)
+        deps.append(
+            Dependency(
+                part, "entity", entity_id, reach, reason, entry_id, False, integration
+            )
+        )
         if entity_id.startswith("script."):
             self._follow_script(entity_id, part, deps, scripts)
 
@@ -448,7 +469,8 @@ async def async_analyze_automations(hass: HomeAssistant) -> list[AutomationRepor
     """Analyze every automation of this instance."""
     if AUTOMATIONS not in hass.data:
         return []
-    entries = await async_classify_entries(hass)
+    settings = async_get_settings(hass)
+    entries = await async_classify_entries(hass, settings.overrides)
     domains = {e.platform for e in er.async_get(hass).entities.values()}
     domains |= {split_entity_id(s)[0] for s in hass.states.async_entity_ids()}
     # Loaded integrations cover entities that do not exist yet, e.g. from scene.create.
@@ -460,7 +482,7 @@ async def async_analyze_automations(hass: HomeAssistant) -> list[AutomationRepor
         for d, i in integrations.items()
         if getattr(i, "integration_type", None) == "helper"
     }
-    analyzer = Analyzer(hass, entries, iot_classes, helpers)
+    analyzer = Analyzer(hass, entries, iot_classes, helpers, settings.overrides)
 
     reports = []
     for automation in hass.data[AUTOMATIONS].entities:
@@ -475,6 +497,7 @@ async def async_analyze_automations(hass: HomeAssistant) -> list[AutomationRepor
                 verdict=verdict,
                 only_notifications=only_notifications,
                 dependencies=deps,
+                important=automation.entity_id in settings.important,
             )
         )
     return sorted(reports, key=lambda r: r.entity_id)
