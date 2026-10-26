@@ -8,17 +8,20 @@ action are followed into their own configuration.
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any
 
 from homeassistant.components.automation import DATA_COMPONENT as AUTOMATIONS
 from homeassistant.components.notify.legacy import NOTIFY_SERVICES
-from homeassistant.core import HomeAssistant, split_entity_id
+from homeassistant.core import HomeAssistant, split_entity_id, valid_entity_id
+from homeassistant.exceptions import TemplateError
 from homeassistant.helpers import area_registry as ar
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
+from homeassistant.helpers.entity_platform import async_get_platforms
+from homeassistant.helpers.template import Template
 from homeassistant.loader import async_get_integrations
 from homeassistant.util import slugify
 
@@ -61,6 +64,13 @@ _SEVERITY = {
 _NEEDS_INTERNET = (Reach.CLOUD, Reach.PARTIAL)
 # Actions that only tell someone something.
 _NOTIFY_DOMAINS = ("notify", "tts")
+# Where helpers set up in YAML keep their source entities.
+_SOURCE_ATTRIBUTES = (
+    "_entity_id",
+    "_entity_ids",
+    "_sensor_source_id",
+    "_source_entity_id",
+)
 # Script actions that start other scripts given as target.
 _SCRIPT_STARTERS = ("script.turn_on", "script.toggle")
 # The script component keeps its entities under its domain, without a typed key.
@@ -133,10 +143,14 @@ class Analyzer:
         hass: HomeAssistant,
         entries: list[EntryReach],
         iot_classes: dict[str, str | None],
+        helpers: set[str],
     ) -> None:
         self.hass = hass
         self.entries = {e.entry_id: e for e in entries}
         self.iot_classes = iot_classes
+        # Integrations computing entities from others (template, derivative, …).
+        self.helpers = helpers
+        self._platform_entities: dict[str, dict[str, Any]] = {}
         self.ent_reg = er.async_get(hass)
         self.dev_reg = dr.async_get(hass)
         self.area_reg = ar.async_get(hass)
@@ -166,7 +180,9 @@ class Analyzer:
             trackers = state.attributes.get("device_trackers", []) if state else []
             return _worst(self._tracker_reach(t, seen) for t in trackers)
 
+        platform = domain
         if entry := self.ent_reg.async_get(entity_id):
+            platform = entry.platform
             if entry.config_entry_id:
                 result = self._entry(entry.config_entry_id)
             else:
@@ -178,12 +194,73 @@ class Analyzer:
             reach, reason = reach_from_iot_class(self.iot_classes.get(domain))
             result = (reach, reason, None)
 
-        # Groups and similar helpers list their members.
-        if result[0] is Reach.INTERNAL and state:
-            members = _as_list(state.attributes.get("entity_id"))
-            if members:
-                return _worst(self.entity_reach(m, seen) for m in members)
+        # Helpers are as dependent as the entities they are computed from.
+        if (result[0] is Reach.INTERNAL or platform in self.helpers) and (
+            sources := self.sources(entity_id, entry)
+        ):
+            return _worst(self.entity_reach(s, seen) for s in sorted(sources))
         return result
+
+    def sources(self, entity_id: str, entry: er.RegistryEntry | None) -> set[str]:
+        """Entities a helper is computed from, as far as they can be found out."""
+        found: set[str] = set()
+        # Groups list their members.
+        if state := self.hass.states.get(entity_id):
+            found.update(_as_list(state.attributes.get("entity_id")))
+        # Helpers set up in the UI keep their sources and templates in the entry.
+        config_entry = (
+            self.hass.config_entries.async_get_entry(entry.config_entry_id)
+            if entry and entry.config_entry_id
+            else None
+        )
+        if config_entry:
+            self._collect_refs(config_entry.data, found)
+            self._collect_refs(config_entry.options, found)
+        # Helpers from YAML only keep them on the entity object. These attributes are
+        # internal to Home Assistant, so a missing one just means no sources.
+        platform = entry.platform if entry else None
+        if entity := self._entity_object(platform, entity_id):
+            info = getattr(entity, "_template_result_info", None)
+            if info is not None:
+                found.update(info.listeners.get("entities", ()))
+            for attr in _SOURCE_ATTRIBUTES:
+                found.update(_as_list(getattr(entity, attr, None)))
+        found.discard(entity_id)
+        return {e for e in found if valid_entity_id(e)}
+
+    def _collect_refs(self, value: Any, found: set[str]) -> None:
+        # Config entries hand out read-only mappings, not dicts.
+        if isinstance(value, Mapping):
+            for item in value.values():
+                self._collect_refs(item, found)
+        elif isinstance(value, list):
+            for item in value:
+                self._collect_refs(item, found)
+        elif isinstance(value, str):
+            if "{" in value:
+                # Rendering only reads states; it tells which entities a template uses.
+                try:
+                    info = Template(value, self.hass).async_render_to_info()
+                except TemplateError:
+                    return
+                found.update(info.entities)
+            elif valid_entity_id(value) and (
+                value in self.ent_reg.entities or self.hass.states.get(value)
+            ):
+                found.add(value)
+
+    def _entity_object(self, platform: str | None, entity_id: str) -> Any:
+        # Entities without a unique ID are not registered; look in every helper.
+        for name in [platform] if platform else sorted(self.helpers):
+            if name not in self._platform_entities:
+                self._platform_entities[name] = {
+                    e.entity_id: e
+                    for p in async_get_platforms(self.hass, name)
+                    for e in p.entities.values()
+                }
+            if entity := self._platform_entities[name].get(entity_id):
+                return entity
+        return None
 
     def _tracker_reach(self, entity_id: str, seen: frozenset[str]) -> Source:
         reach, reason, entry_id = self.entity_reach(entity_id, seen)
@@ -378,7 +455,12 @@ async def async_analyze_automations(hass: HomeAssistant) -> list[AutomationRepor
     domains |= {c.partition(".")[0] for c in hass.config.components}
     integrations = await async_get_integrations(hass, domains)
     iot_classes = {d: effective_iot_class(i) for d, i in integrations.items()}
-    analyzer = Analyzer(hass, entries, iot_classes)
+    helpers = {
+        d
+        for d, i in integrations.items()
+        if getattr(i, "integration_type", None) == "helper"
+    }
+    analyzer = Analyzer(hass, entries, iot_classes, helpers)
 
     reports = []
     for automation in hass.data[AUTOMATIONS].entities:

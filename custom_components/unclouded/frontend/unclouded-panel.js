@@ -389,4 +389,5 @@ const STYLE = `
   }
 `;
 
-customElements.define("unclouded-panel", UncloudedPanel);
+// After an update the browser may load the new module next to the old one.
+if (!customElements.get("unclouded-panel")) customElements.define("unclouded-panel", UncloudedPanel);
