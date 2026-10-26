@@ -100,6 +100,8 @@ class AutomationReport:
 
     entity_id: str
     name: str
+    # ID in automations.yaml, used to open the editor; None for automations without.
+    config_id: str | None
     verdict: Verdict
     # True when everything that needs the internet only sends notifications.
     only_notifications: bool
@@ -387,6 +389,7 @@ async def async_analyze_automations(hass: HomeAssistant) -> list[AutomationRepor
             AutomationReport(
                 entity_id=automation.entity_id,
                 name=state.name if state else automation.entity_id,
+                config_id=(automation.raw_config or {}).get("id"),
                 verdict=verdict,
                 only_notifications=only_notifications,
                 dependencies=deps,
