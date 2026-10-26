@@ -90,6 +90,7 @@ async def test_local_automation_works(hass: HomeAssistant, setup) -> None:
     )
     assert report.verdict is Verdict.WORKS
     assert report.name == "Test"
+    assert report.config_id == "test"
     assert {d.ref for d in report.dependencies} == {
         "sensor.local_temp",
         "light.local_lamp",
