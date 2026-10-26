@@ -9,6 +9,7 @@ import voluptuous as vol
 from homeassistant.components import websocket_api
 from homeassistant.core import HomeAssistant, callback
 
+from .analyze import async_analyze_automations
 from .classify import async_classify_entries
 from .const import DOMAIN
 
@@ -21,6 +22,7 @@ def async_register(hass: HomeAssistant) -> None:
     if hass.data.get(_REGISTERED):
         return
     websocket_api.async_register_command(hass, ws_entries)
+    websocket_api.async_register_command(hass, ws_automations)
     hass.data[_REGISTERED] = True
 
 
@@ -33,3 +35,14 @@ async def ws_entries(
     """Return the classification of all config entries."""
     entries = await async_classify_entries(hass)
     connection.send_result(msg["id"], {"entries": [asdict(e) for e in entries]})
+
+
+@websocket_api.require_admin
+@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/automations"})
+@websocket_api.async_response
+async def ws_automations(
+    hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
+) -> None:
+    """Return the verdict for every automation."""
+    reports = await async_analyze_automations(hass)
+    connection.send_result(msg["id"], {"automations": [asdict(r) for r in reports]})
