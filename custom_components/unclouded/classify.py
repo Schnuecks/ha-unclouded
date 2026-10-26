@@ -7,13 +7,15 @@ entry was set up. Those get a rule that reads the entry itself.
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from enum import StrEnum
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.loader import async_get_integrations
+
+from .settings import entry_key
 
 
 class Reach(StrEnum):
@@ -39,6 +41,9 @@ class EntryReach:
     reach: Reach
     # Stable key of the reason; the panel turns it into text.
     reason: str
+    # What Unclouded found out by itself, before a choice of the user.
+    automatic: Reach
+    overridden: bool
 
 
 def reach_from_iot_class(iot_class: str | None) -> tuple[Reach, str]:
@@ -56,16 +61,18 @@ def effective_iot_class(integration: object) -> str | None:
     """The iot_class of an integration, if it could be loaded.
 
     Built-in helpers like script, scene or input_boolean declare none; they only work
-    with what is inside Home Assistant.
+    with what is inside Home Assistant. Neither do built-in hardware integrations for
+    adapters plugged into the host.
     """
     iot_class = getattr(integration, "iot_class", None)
-    if (
-        iot_class is None
-        and getattr(integration, "is_built_in", False)
-        and getattr(integration, "quality_scale", None) == "internal"
-    ):
+    if iot_class is not None or not getattr(integration, "is_built_in", False):
+        return iot_class
+    if getattr(integration, "quality_scale", None) == "internal":
         return "calculated"
-    return iot_class
+    # Adapters plugged into the host, e.g. Zigbee or Thread sticks.
+    if getattr(integration, "integration_type", None) == "hardware":
+        return "local_polling"
+    return None
 
 
 def _sonoff(entry: ConfigEntry) -> tuple[Reach, str]:
@@ -108,8 +115,11 @@ ENTRY_RULES: dict[str, Callable[[ConfigEntry], tuple[Reach, str]]] = {
 }
 
 
-async def async_classify_entries(hass: HomeAssistant) -> list[EntryReach]:
+async def async_classify_entries(
+    hass: HomeAssistant, overrides: Mapping[str, str] | None = None
+) -> list[EntryReach]:
     """Classify every config entry of this instance."""
+    overrides = overrides or {}
     entries = hass.config_entries.async_entries()
     integrations = await async_get_integrations(hass, {e.domain for e in entries})
     result = []
@@ -120,6 +130,11 @@ async def async_classify_entries(hass: HomeAssistant) -> list[EntryReach]:
             reach, reason = rule(entry)
         else:
             reach, reason = reach_from_iot_class(iot_class)
+        automatic = reach
+        # The user only fills gaps: a choice counts while nothing else is known.
+        chosen = overrides.get(entry_key(entry.entry_id))
+        if chosen and automatic is Reach.UNKNOWN:
+            reach, reason = Reach(chosen), "user_override"
         result.append(
             EntryReach(
                 entry_id=entry.entry_id,
@@ -128,6 +143,22 @@ async def async_classify_entries(hass: HomeAssistant) -> list[EntryReach]:
                 iot_class=iot_class,
                 reach=reach,
                 reason=reason,
+                automatic=automatic,
+                overridden=reason == "user_override",
             )
         )
     return sorted(result, key=lambda r: (r.domain, r.title))
+
+
+async def async_can_override(hass: HomeAssistant, key: str) -> bool:
+    """Whether the user may classify this entry or integration: only when unknown."""
+    kind, _, ref = key.partition(":")
+    if kind == "entry":
+        entry = hass.config_entries.async_get_entry(ref)
+        if entry is None:
+            return False
+        (result,) = [r for r in await async_classify_entries(hass) if r.entry_id == ref]
+        return result.automatic is Reach.UNKNOWN
+    integrations = await async_get_integrations(hass, {ref})
+    iot_class = effective_iot_class(integrations.get(ref))
+    return reach_from_iot_class(iot_class)[0] is Reach.UNKNOWN

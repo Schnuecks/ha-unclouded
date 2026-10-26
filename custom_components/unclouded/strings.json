@@ -9,5 +9,19 @@
     "abort": {
       "single_instance_allowed": "Unclouded is already set up."
     }
+  },
+  "issues": {
+    "important_fails": {
+      "title": "{name} stops without internet",
+      "description": "The automation **{name}**, which you marked as important, does nothing while the internet is down. Open Unclouded in the sidebar to see which parts need it."
+    },
+    "important_degraded": {
+      "title": "{name} works only partly without internet",
+      "description": "The automation **{name}**, which you marked as important, runs while the internet is down, but some of its parts do not get through. Open Unclouded in the sidebar to see which ones."
+    },
+    "important_notifications": {
+      "title": "Notifications of {name} need the internet",
+      "description": "The automation **{name}**, which you marked as important, sends notifications that do not arrive while the internet is down. Everything else it does keeps working."
+    }
   }
 }

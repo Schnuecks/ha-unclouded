@@ -9,5 +9,19 @@
     "abort": {
       "single_instance_allowed": "Unclouded ist bereits eingerichtet."
     }
+  },
+  "issues": {
+    "important_fails": {
+      "title": "{name} fällt ohne Internet aus",
+      "description": "Die Automation **{name}**, die du als wichtig markiert hast, bewirkt ohne Internet nichts. In Unclouded in der Seitenleiste siehst du, welche Teile es brauchen."
+    },
+    "important_degraded": {
+      "title": "{name} läuft ohne Internet nur teilweise",
+      "description": "Die Automation **{name}**, die du als wichtig markiert hast, läuft ohne Internet, aber manche ihrer Teile kommen nicht durch. In Unclouded in der Seitenleiste siehst du, welche."
+    },
+    "important_notifications": {
+      "title": "Benachrichtigungen von {name} brauchen Internet",
+      "description": "Die Automation **{name}**, die du als wichtig markiert hast, verschickt Benachrichtigungen, die ohne Internet nicht ankommen. Alles andere läuft weiter."
+    }
   }
 }
