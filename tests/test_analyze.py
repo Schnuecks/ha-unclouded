@@ -499,3 +499,72 @@ async def test_person_with_local_tracker_is_local(hass: HomeAssistant, setup) ->
     assert report.verdict is Verdict.WORKS
     (zone,) = [d for d in report.dependencies if d.ref == "zone.home"]
     assert zone.reason == "person_local_tracker"
+
+
+async def test_scene_apply_names_its_entities(hass: HomeAssistant, setup) -> None:
+    """Entities set by scene.apply count like targets."""
+    report = await _analyze(
+        hass,
+        {
+            "triggers": [LOCAL_TRIGGER],
+            "actions": [
+                {
+                    "action": "scene.apply",
+                    "data": {
+                        "entities": {
+                            "light.local_lamp": "on",
+                            "sensor.cloud_temp": {"state": "1"},
+                        }
+                    },
+                }
+            ],
+        },
+    )
+    assert report.verdict is Verdict.DEGRADED
+    assert {"light.local_lamp", "sensor.cloud_temp"} <= {
+        d.ref for d in report.dependencies
+    }
+
+
+async def test_scene_create_snapshot(hass: HomeAssistant, setup) -> None:
+    """Entities saved by scene.create are part of the automation too."""
+    report = await _analyze(
+        hass,
+        {
+            "triggers": [LOCAL_TRIGGER],
+            "actions": [
+                {
+                    "action": "scene.create",
+                    "data": {
+                        "scene_id": "before",
+                        "snapshot_entities": [
+                            "light.local_lamp",
+                            "weather.cloud_forecast",
+                        ],
+                    },
+                }
+            ],
+        },
+    )
+    assert "weather.cloud_forecast" in {d.ref for d in report.dependencies}
+
+
+async def test_stored_scene_follows_its_entities(hass: HomeAssistant, setup) -> None:
+    """A scene from scenes.yaml is as dependent as the entities it sets."""
+    assert await async_setup_component(
+        hass,
+        "scene",
+        {"scene": [{"name": "Evening", "entities": {"sensor.cloud_temp": "1"}}]},
+    )
+    await hass.async_block_till_done()
+    report = await _analyze(
+        hass,
+        {
+            "triggers": [LOCAL_TRIGGER],
+            "actions": [
+                {"action": "scene.turn_on", "target": {"entity_id": "scene.evening"}}
+            ],
+        },
+    )
+    (scene,) = [d for d in report.dependencies if d.ref == "scene.evening"]
+    assert scene.reach is Reach.CLOUD

@@ -72,6 +72,8 @@ _SOURCE_ATTRIBUTES = (
     "_sensor_source_id",
     "_source_entity_id",
 )
+# Keys whose entries are entity IDs, e.g. in scene.apply and scene.create.
+_ENTITY_COLLECTIONS = ("entities", "snapshot_entities")
 # Script actions that start other scripts given as target.
 _SCRIPT_STARTERS = ("script.turn_on", "script.toggle")
 # The script component keeps its entities under its domain, without a typed key.
@@ -397,6 +399,12 @@ class Analyzer:
                     deps.append(
                         Dependency(part, "device", device_id, reach, reason, entry_id)
                     )
+            elif key in _ENTITY_COLLECTIONS:
+                # scene.apply and scene.create name their entities as keys.
+                refs = list(value) if isinstance(value, (dict, list)) else []
+                for entity_id in refs:
+                    if isinstance(entity_id, str) and valid_entity_id(entity_id):
+                        self._add_entity(entity_id, part, deps, scripts)
             elif key == "area_id":
                 for area_id in _as_list(value):
                     for entity_id in sorted(self.area_entities(area_id)):
