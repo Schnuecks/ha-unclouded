@@ -15,6 +15,7 @@ from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.helpers.start import async_at_started
 
 from . import websocket
+from .changes import Baseline
 from .const import DOMAIN
 from .repairs import async_remove_issues, async_update_issues
 
@@ -28,6 +29,7 @@ REFRESH_INTERVAL = timedelta(hours=1)
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Unclouded from a config entry."""
+    entry.runtime_data = Baseline(hass)
     websocket.async_register(hass)
 
     # Static paths cannot be removed again, so they are registered once per run.
@@ -68,3 +70,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     frontend.async_remove_panel(hass, PANEL_URL, warn_if_unknown=False)
     async_remove_issues(hass)
     return True
+
+
+async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Forget the remembered state when Unclouded is removed."""
+    await Baseline(hass).async_remove()

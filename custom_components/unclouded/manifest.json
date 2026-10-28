@@ -13,6 +13,7 @@
     "frontend",
     "http",
     "panel_custom",
+    "repairs",
     "websocket_api"
   ],
   "documentation": "https://github.com/Schnuecks/ha-unclouded",
