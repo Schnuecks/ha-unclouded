@@ -37,6 +37,8 @@ class EntryReach:
     entry_id: str
     domain: str
     title: str
+    # Name of the integration, e.g. "UniFi Network", as opposed to the entry's title.
+    integration_name: str
     iot_class: str | None
     reach: Reach
     # Stable key of the reason; the panel turns it into text.
@@ -140,6 +142,9 @@ async def async_classify_entries(
                 entry_id=entry.entry_id,
                 domain=entry.domain,
                 title=entry.title,
+                integration_name=getattr(
+                    integrations.get(entry.domain), "name", entry.domain
+                ),
                 iot_class=iot_class,
                 reach=reach,
                 reason=reason,

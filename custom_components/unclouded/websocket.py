@@ -9,6 +9,7 @@ import voluptuous as vol
 from homeassistant.components import websocket_api
 from homeassistant.core import HomeAssistant, callback
 
+from .advice import build_advice
 from .analyze import async_analyze_automations
 from .classify import async_can_override, async_classify_entries
 from .const import DOMAIN
@@ -56,9 +57,16 @@ async def ws_entries(
 async def ws_automations(
     hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
 ) -> None:
-    """Return the verdict for every automation."""
+    """Return the verdict for every automation and what the user can do."""
     reports = await async_analyze_automations(hass)
-    connection.send_result(msg["id"], {"automations": [asdict(r) for r in reports]})
+    entries = await async_classify_entries(hass, async_get_settings(hass).overrides)
+    connection.send_result(
+        msg["id"],
+        {
+            "automations": [asdict(r) for r in reports],
+            "advice": [asdict(a) for a in build_advice(hass, reports, entries)],
+        },
+    )
 
 
 @websocket_api.require_admin
