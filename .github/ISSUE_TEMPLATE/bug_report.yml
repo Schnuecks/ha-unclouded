@@ -1,0 +1,52 @@
+name: Bug report
+description: Something does not work as expected
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a problem. Please fill in as much as you can;
+        German is fine too. Replace names you do not want to share.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you expect, and what happened instead?
+      placeholder: |
+        Unclouded says my automation "Garage door closed" stops working without internet,
+        but the garage door integration works locally.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Unclouded version
+      description: Shown under Settings → Devices & services → Unclouded.
+    validations:
+      required: true
+  - type: input
+    id: ha
+    attributes:
+      label: Home Assistant version
+      placeholder: e.g. 2026.10.2
+    validations:
+      required: true
+  - type: input
+    id: integration
+    attributes:
+      label: Integration concerned
+      description: Which integration is classified wrongly or causes the problem, and how is it set up?
+      placeholder: e.g. Shelly, set up locally without the cloud
+  - type: textarea
+    id: details
+    attributes:
+      label: Technical details
+      description: |
+        In the Unclouded panel, open the automation in question, expand "Technical details"
+        and copy what it shows.
+      render: text
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else?
+      description: Screenshots of the panel, the automation in question (as YAML), etc.

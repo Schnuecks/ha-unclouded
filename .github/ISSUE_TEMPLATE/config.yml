@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://github.com/Schnuecks/ha-unclouded#readme
+    about: Installation, usage and how Unclouded comes to its results are described in the README and the guide.
+  - name: Security problem
+    url: https://github.com/Schnuecks/ha-unclouded/blob/main/SECURITY.md
+    about: Please report vulnerabilities privately, not as a public issue. How to do that is described here.
