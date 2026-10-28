@@ -22,6 +22,28 @@
     "important_notifications": {
       "title": "Benachrichtigungen von {name} brauchen Internet",
       "description": "Die Automation **{name}**, die du als wichtig markiert hast, verschickt Benachrichtigungen, die ohne Internet nicht ankommen. Alles andere läuft weiter."
+    },
+    "now_cloud": {
+      "title": "{title} braucht jetzt Internet",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "{title} braucht jetzt Internet",
+            "description": "**{title}** ({domain}) verbindet sich jetzt über einen Cloud-Dienst, meist nach einem Update. Bisher lief sie ohne Internet. In Unclouded in der Seitenleiste siehst du, welche Automationen betroffen sind. Bestätige mit OK, dass du es gesehen hast; Unclouded meldet es erst wieder, wenn es sich erneut ändert."
+          }
+        }
+      }
+    },
+    "now_partial": {
+      "title": "{title} läuft ohne Internet nur noch teilweise",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "{title} läuft ohne Internet nur noch teilweise",
+            "description": "**{title}** ({domain}) braucht jetzt in manchen Fällen Internet, meist nach einem Update. Bisher lief sie ohne. In Unclouded in der Seitenleiste siehst du, welche Automationen betroffen sind. Bestätige mit OK, dass du es gesehen hast; Unclouded meldet es erst wieder, wenn es sich erneut ändert."
+          }
+        }
+      }
     }
   }
 }

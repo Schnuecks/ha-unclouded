@@ -22,6 +22,28 @@
     "important_notifications": {
       "title": "Notifications of {name} need the internet",
       "description": "The automation **{name}**, which you marked as important, sends notifications that do not arrive while the internet is down. Everything else it does keeps working."
+    },
+    "now_cloud": {
+      "title": "{title} now needs the internet",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "{title} now needs the internet",
+            "description": "**{title}** ({domain}) now connects through a cloud service, usually after an update. Until now it worked without the internet. Open Unclouded in the sidebar to see which automations are affected. Confirm with OK that you have seen this; Unclouded only reports it again if it changes once more."
+          }
+        }
+      }
+    },
+    "now_partial": {
+      "title": "{title} now works only partly without internet",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "{title} now works only partly without internet",
+            "description": "**{title}** ({domain}) now needs the internet in some situations, usually after an update. Until now it worked without it. Open Unclouded in the sidebar to see which automations are affected. Confirm with OK that you have seen this; Unclouded only reports it again if it changes once more."
+          }
+        }
+      }
     }
   }
 }
