@@ -38,6 +38,7 @@ async def test_built_in_integration_uses_iot_class(hass: HomeAssistant) -> None:
     result = await _classify(hass, MockConfigEntry(domain="met", title="Home"))
     assert result.iot_class == "cloud_polling"
     assert result.reach is Reach.CLOUD
+    assert result.integration_name.startswith("Meteorologisk")
     assert result.reason == "iot_class_cloud"
 
 
@@ -46,6 +47,7 @@ async def test_missing_integration_is_unknown(hass: HomeAssistant) -> None:
     result = await _classify(hass, MockConfigEntry(domain="not_installed_anywhere"))
     assert result.iot_class is None
     assert result.reach is Reach.UNKNOWN
+    assert result.integration_name == "not_installed_anywhere"
 
 
 @pytest.mark.parametrize(

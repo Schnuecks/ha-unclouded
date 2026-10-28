@@ -60,11 +60,13 @@ const STRINGS = {
       "For the ones that matter, add a signal that works at home: let a light flash, make an announcement on a speaker or show a message on the TV. Mark them with ★ and Home Assistant reminds you under Repairs while they still depend on the internet.",
     advice_presence_title: "Detect presence locally as well",
     advice_presence_why:
-      "Whether someone is at home only comes from the phone ({entries}). While away it reports over the internet; if that is down, Home Assistant keeps the last known state.",
+      "So far Home Assistant only learns from the phones whether someone is at home. While away, they report their location over the internet. If it is down, the last known state stays put, and automations that react to coming or going do not run.",
     advice_presence_how_helpers:
-      "Through {helpers}, Home Assistant already sees devices in your network. Add the phone found there to the person as a second tracker (Settings → People). Coming home is then noticed without the internet.",
+      "The {helpers} integrations already see which devices are on your Wi-Fi. Find the phone there and add it to the person as another device (Settings → People). Home Assistant then knows without the internet whether someone is at home.",
+    advice_presence_how_helpers1:
+      "The {helpers} integration already sees which devices are on your Wi-Fi. Find the phone there and add it to the person as another device (Settings → People). Home Assistant then knows without the internet whether someone is at home.",
     advice_presence_how:
-      "Add a local tracker, for example from your router, and assign it to the person (Settings → People).",
+      "Set up an integration for your router or Wi-Fi that sees which devices are connected, and add the phone found there to the person (Settings → People).",
     advice_cloud_devices_title: "Devices behind a manufacturer's cloud",
     advice_cloud_devices_why:
       "With {entries}, everything goes through the manufacturer's servers. Without internet, or once the manufacturer shuts the service down, nothing responds.",
@@ -182,11 +184,13 @@ const STRINGS = {
       "Ergänze bei den wichtigen ein Signal, das zu Hause funktioniert: eine Lampe blinken lassen, eine Durchsage über einen Lautsprecher oder einen Hinweis auf dem Fernseher. Markiere sie mit ★, dann erinnert Home Assistant unter Reparaturen daran, solange sie vom Internet abhängen.",
     advice_presence_title: "Anwesenheit auch lokal erkennen",
     advice_presence_why:
-      "Ob jemand zu Hause ist, kommt nur vom Handy ({entries}). Unterwegs meldet es sich über das Internet; fällt das aus, behält Home Assistant den letzten Stand.",
+      "Ob jemand zu Hause ist, erfährt Home Assistant bisher nur von den Handys. Unterwegs melden sie ihren Standort über das Internet. Fällt es aus, bleibt der letzte Stand stehen, und Automationen, die auf Kommen oder Gehen reagieren, laufen nicht.",
     advice_presence_how_helpers:
-      "Über {helpers} sieht Home Assistant die Geräte in deinem Netz schon. Füge das Handy von dort der Person als zweiten Tracker hinzu (Einstellungen → Personen). Dann wird das Heimkommen auch ohne Internet erkannt.",
+      "Die Integrationen {helpers} sehen schon, welche Geräte in deinem WLAN sind. Such dort das Handy heraus und füge es der Person als weiteres Gerät hinzu (Einstellungen → Personen). Dann weiß Home Assistant auch ohne Internet, ob jemand zu Hause ist.",
+    advice_presence_how_helpers1:
+      "Die Integration {helpers} sieht schon, welche Geräte in deinem WLAN sind. Such dort das Handy heraus und füge es der Person als weiteres Gerät hinzu (Einstellungen → Personen). Dann weiß Home Assistant auch ohne Internet, ob jemand zu Hause ist.",
     advice_presence_how:
-      "Ergänze einen lokalen Tracker, etwa über deinen Router, und ordne ihn der Person zu (Einstellungen → Personen).",
+      "Richte eine Integration für deinen Router oder dein WLAN ein, die sieht, welche Geräte verbunden sind, und füge das Handy von dort der Person hinzu (Einstellungen → Personen).",
     advice_cloud_devices_title: "Geräte hinter einer Hersteller-Cloud",
     advice_cloud_devices_why:
       "Bei {entries} läuft alles über Server des Herstellers. Ohne Internet, oder wenn der Hersteller den Dienst einstellt, reagiert nichts.",
@@ -422,9 +426,13 @@ class UncloudedPanel extends HTMLElement {
     const t = this._t;
     if (!this._advice.length) return "";
     const items = this._advice.map((a, i) => {
-      const values = { entries: this._titles(a.entries), helpers: this._titles(a.helpers) };
+      const helpers = [
+        ...new Set(a.helpers.map((id) => this._entry(id)?.integration_name).filter(Boolean)),
+      ];
+      const values = { entries: this._titles(a.entries), helpers: this._list(helpers) };
       let how = t[`advice_${a.key}_how`];
-      if (a.key === "presence" && a.helpers.length) how = t.advice_presence_how_helpers;
+      if (a.key === "presence" && helpers.length)
+        how = helpers.length === 1 ? t.advice_presence_how_helpers1 : t.advice_presence_how_helpers;
       const names = a.automations
         .map((id) => this._automations.find((x) => x.entity_id === id))
         .filter(Boolean)
