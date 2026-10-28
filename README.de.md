@@ -35,8 +35,9 @@ klaren Worten, was du ändern kannst.
 
 ## Funktionen
 
-- **Ein Satz pro Automation:** ob sie weiterläuft, teilweise läuft oder ausfällt, und warum –
-  zum Beispiel „Benachrichtigung an Alex's phone kommt nicht an“.
+- **Ein Satz pro Automation:** ob sie weiterläuft, nur ihre Benachrichtigungen verliert oder
+  Funktion verliert, und warum – zum Beispiel „Benachrichtigung an Alex's phone kommt nicht
+  an“.
 - **Vorschläge aus deiner Einrichtung:** Lokalen Push einschalten, wichtigen Meldungen einen
   zweiten, lokalen Weg geben, Anwesenheit zusätzlich über den Router erkennen (mit dem
   genauen Eintrag für jedes Handy), Geräte hinter einer Hersteller-Cloud, lokale

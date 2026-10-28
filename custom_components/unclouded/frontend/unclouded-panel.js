@@ -5,15 +5,15 @@ const STRINGS = {
   en: {
     intro: "What keeps working in your Home Assistant when the internet is down.",
     refresh: "Check again",
-    verdict_fails: "Stops working",
-    verdict_degraded: "Works partly",
-    verdict_unknown: "Not sure",
-    verdict_works: "Keeps working",
-    hint_fails: "These automations do nothing without the internet.",
-    hint_degraded: "These run, but some of their parts do not get through.",
+    section_loss: "Lose function or stop",
+    section_notify: "Only lose their notifications",
+    section_unknown: "Not sure",
+    section_works: "Keep working",
+    hint_loss: "Without the internet these are not triggered or do not switch something.",
+    hint_notify: "What these switch keeps working; only their messages do not arrive without the internet.",
     hint_unknown: "Nothing here is known to need the internet, but some parts could not be checked.",
     hint_works: "These only use things inside your home.",
-    onlyNotifications: "only notifications",
+    stopsCompletely: "stops completely",
     open: "Open",
     markImportant: "Mark as important: Home Assistant then reports under Repairs when it needs the internet",
     unmarkImportant: "Marked as important; click to remove",
@@ -85,6 +85,7 @@ const STRINGS = {
     say_tts: "announcement via {who} is not made",
     say_trigger: "{what} ({who}) comes from the cloud, so the automation is not triggered",
     say_presence: "presence from phones only arrives over the internet while away",
+    say_trigger_partial: "{what} ({who}) only arrives over the internet while away, so the automation may not be triggered",
     say_condition: "condition on {what} ({who}) cannot be checked",
     say_action: "{what} ({who}) is not switched",
     say_unknown: "unclear how {what} connects",
@@ -142,15 +143,15 @@ const STRINGS = {
   de: {
     intro: "Was in deinem Home Assistant weiterläuft, wenn das Internet weg ist.",
     refresh: "Neu prüfen",
-    verdict_fails: "Fällt aus",
-    verdict_degraded: "Läuft teilweise",
-    verdict_unknown: "Unklar",
-    verdict_works: "Läuft weiter",
-    hint_fails: "Diese Automationen bewirken ohne Internet nichts.",
-    hint_degraded: "Diese laufen, aber manche ihrer Teile kommen nicht durch.",
+    section_loss: "Verlieren Funktion oder fallen aus",
+    section_notify: "Verlieren nur Benachrichtigungen",
+    section_unknown: "Unklar",
+    section_works: "Laufen weiter",
+    hint_loss: "Ohne Internet lösen diese nicht aus oder schalten etwas nicht.",
+    hint_notify: "Was sie schalten, läuft weiter; nur ihre Nachrichten kommen ohne Internet nicht an.",
     hint_unknown: "Nichts davon braucht bekanntermaßen Internet, aber manche Teile ließen sich nicht prüfen.",
     hint_works: "Diese nutzen nur, was bei dir zu Hause ist.",
-    onlyNotifications: "nur Benachrichtigungen",
+    stopsCompletely: "fällt ganz aus",
     open: "Öffnen",
     markImportant: "Als wichtig markieren: Home Assistant meldet dann unter Reparaturen, wenn sie Internet braucht",
     unmarkImportant: "Als wichtig markiert; Klick nimmt die Markierung weg",
@@ -219,6 +220,7 @@ const STRINGS = {
     say_tts: "Durchsage über {who} entfällt",
     say_trigger: "{what} ({who}) kommt aus der Cloud, die Automation löst nicht aus",
     say_presence: "Anwesenheit kommt unterwegs nur über das Internet",
+    say_trigger_partial: "{what} ({who}) kommt unterwegs nur über das Internet, die Automation löst dann womöglich nicht aus",
     say_condition: "Bedingung zu {what} ({who}) lässt sich nicht prüfen",
     say_action: "{what} ({who}) wird nicht geschaltet",
     say_unknown: "unklar, wie sich {what} verbindet",
@@ -275,7 +277,16 @@ const STRINGS = {
   },
 };
 
-const VERDICTS = ["fails", "degraded", "unknown", "works"];
+// The overview and the lists use the same four groups, by what is lost.
+const KINDS = ["loss", "notify", "unknown", "works"];
+const kindOf = (a) =>
+  a.verdict === "works"
+    ? "works"
+    : a.verdict === "unknown"
+      ? "unknown"
+      : a.only_notifications
+        ? "notify"
+        : "loss";
 const REACHES = ["cloud", "partial", "unknown", "local", "internal"];
 const LOCAL = ["local", "internal"];
 
@@ -395,7 +406,8 @@ class UncloudedPanel extends HTMLElement {
       if (d.part === "action" && d.ref.startsWith("tts.")) return this._fmt(t.say_tts, { who });
       if (d.reason === "mobile_app_presence") return t.say_presence;
       if (d.reach === "unknown") return this._fmt(t.say_unknown, { what });
-      if (d.part === "trigger") return this._fmt(t.say_trigger, { what, who });
+      if (d.part === "trigger")
+        return this._fmt(d.reach === "partial" ? t.say_trigger_partial : t.say_trigger, { what, who });
       if (d.part === "condition") return this._fmt(t.say_condition, { what, who });
       return this._fmt(t.say_action, { what, who });
     });
@@ -411,16 +423,15 @@ class UncloudedPanel extends HTMLElement {
     const all = this._automations;
     if (all.length && all.every((a) => a.verdict === "works"))
       return `<section class="card hero"><p class="hero-good">${esc(t.summaryAllGood)}</p></section>`;
-    const kinds = {
-      works: (a) => a.verdict === "works",
-      notify: (a) => a.only_notifications,
-      loss: (a) => ["fails", "degraded"].includes(a.verdict) && !a.only_notifications,
-      unknown: (a) => a.verdict === "unknown",
-    };
-    const parts = Object.entries(kinds)
-      .map(([kind, fn]) => ({ kind, items: all.filter(fn) }))
+    const parts = ["works", "notify", "loss", "unknown"]
+      .map((kind) => ({
+        kind,
+        items: all
+          .filter((a) => kindOf(a) === kind)
+          .sort((a, b) => a.name.localeCompare(b.name)),
+      }))
       .filter((p) => p.items.length);
-    const works = all.filter(kinds.works).length;
+    const works = all.filter((a) => kindOf(a) === "works").length;
     const bar = parts
       .map(
         (p) => `<span class="seg ${p.kind}" style="flex: ${p.items.length}"
@@ -557,9 +568,10 @@ class UncloudedPanel extends HTMLElement {
     const link = automation.config_id
       ? `<a class="open" href="/config/automation/edit/${encodeURIComponent(automation.config_id)}">${esc(t.open)} ›</a>`
       : "";
-    const flag = automation.only_notifications
-      ? `<span class="badge note">${esc(t.onlyNotifications)}</span>`
-      : "";
+    const flag =
+      automation.verdict === "fails" && !automation.only_notifications
+        ? `<span class="badge cloud">${esc(t.stopsCompletely)}</span>`
+        : "";
     const star = `<button class="star${automation.important ? " on" : ""}" data-important="${esc(automation.entity_id)}"
       title="${esc(automation.important ? t.unmarkImportant : t.markImportant)}">${automation.important ? "★" : "☆"}</button>`;
     const row = `${star}<span class="name">${esc(automation.name)}</span>${flag}${link}`;
@@ -582,14 +594,14 @@ class UncloudedPanel extends HTMLElement {
   _renderVerdicts() {
     const t = this._t;
     if (!this._automations.length) return `<p class="muted">${esc(t.noAutomations)}</p>`;
-    const groups = Object.fromEntries(VERDICTS.map((v) => [v, []]));
-    for (const a of this._automations) groups[a.verdict].push(a);
+    const groups = Object.fromEntries(KINDS.map((k) => [k, []]));
+    for (const a of this._automations) groups[kindOf(a)].push(a);
     const byName = (a, b) => a.name.localeCompare(b.name);
-    const sections = VERDICTS.filter((v) => groups[v].length)
+    const sections = KINDS.filter((k) => groups[k].length)
       .map(
         (v) => `
         <section class="card" id="${v}">
-          <h2><span class="dot ${v}"></span>${esc(t[`verdict_${v}`])} · ${groups[v].length}</h2>
+          <h2><span class="dot ${v}"></span>${esc(t[`section_${v}`])} · ${groups[v].length}</h2>
           <p class="muted">${esc(t[`hint_${v}`])}</p>
           <ul class="automations">
             ${groups[v].sort(byName).map((a) => this._renderAutomation(a)).join("")}
@@ -807,8 +819,6 @@ const STYLE = `
     border: 1px solid var(--divider-color); padding: 16px; margin-bottom: 16px; }
   h2 { display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 500; margin: 0 0 4px; }
   .dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
-  .dot.fails { background: var(--uc-fails); }
-  .dot.degraded { background: var(--uc-degraded); }
   .dot.unknown { background: var(--uc-unknown); }
   .dot.works { background: var(--uc-works); }
   .dot.notify { background: var(--uc-degraded); }
