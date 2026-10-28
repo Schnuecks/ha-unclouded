@@ -7,7 +7,7 @@ Ergebnissen kommt. Einen kurzen Überblick und die Installation gibt es in der
 [README](../README.de.md).
 
 - [Das Panel](#das-panel)
-- [Was die Bewertungen bedeuten](#was-die-bewertungen-bedeuten)
+- [Was die Gruppen bedeuten](#was-die-gruppen-bedeuten)
 - [Wie Unclouded Integrationen einstuft](#wie-unclouded-integrationen-einstuft)
 - [Wie Automationen verfolgt werden](#wie-automationen-verfolgt-werden)
 - [Wichtige Automationen und Reparaturen](#wichtige-automationen-und-reparaturen)
@@ -38,17 +38,16 @@ Ergebnissen kommt. Einen kurzen Überblick und die Installation gibt es in der
 
 Jede Änderung im Panel wird unten im Bild bestätigt.
 
-## Was die Bewertungen bedeuten
+## Was die Gruppen bedeuten
 
-| Bewertung | Bedeutung |
+Die Übersicht und die Listen darunter nutzen dieselben vier Gruppen und Farben:
+
+| Gruppe | Bedeutung |
 |---|---|
-| **Läuft weiter** | Alles, was sie nutzt, ist bei dir zu Hause oder in Home Assistant. |
-| **Läuft teilweise** | Sie läuft, aber manche ihrer Teile kommen nicht durch, etwa eine Benachrichtigung oder einer von mehreren Auslösern. |
-| **Fällt aus** | Ohne Internet bewirkt sie nichts: ihr einziger Auslöser, eine Bedingung oder alle Aktionen brauchen Internet. |
-| **Unklar** | Nichts braucht bekanntermaßen Internet, aber ein Teil ließ sich nicht einstufen. |
-
-**nur Benachrichtigungen** markiert Automationen, bei denen nichts außer Benachrichtigungen
-verloren geht.
+| **Verlieren Funktion oder fallen aus** (rot) | Ohne Internet löst die Automation nicht aus, eine Bedingung lässt sich nicht prüfen oder etwas wird nicht geschaltet. **fällt ganz aus** markiert die, die dann gar nichts mehr tun. |
+| **Verlieren nur Benachrichtigungen** (orange) | Was die Automation schaltet, läuft weiter; nur ihre Benachrichtigungen kommen nicht an. Automationen, die nur benachrichtigen, zählen auch hierher. |
+| **Unklar** (grau) | Nichts braucht bekanntermaßen Internet, aber ein Teil ließ sich nicht einstufen. |
+| **Laufen weiter** (grün) | Alles, was sie nutzt, ist bei dir zu Hause oder in Home Assistant. |
 
 ## Wie Unclouded Integrationen einstuft
 
@@ -119,9 +118,10 @@ stündlich und nach jeder Änderung im Panel.
 Integrationen verbinden, und ändert nie etwas. Das Ergebnis ist eine sorgfältige
 Einschätzung, keine Messung.
 
-**Warum gilt eine Automation als „läuft teilweise“, obwohl für mich nur ihre Benachrichtigung
-zählt?** Unclouded kann nicht wissen, welcher Teil dir am wichtigsten ist. Markiere sie mit ★,
-dann sagt der Reparaturhinweis, dass nur die Benachrichtigung verloren geht.
+**Ein Alarm, der nur eine Benachrichtigung schickt, steht unter „Verlieren nur
+Benachrichtigungen“, obwohl er dann gar nichts tut. Warum?** Weil die Benachrichtigung alles
+ist, was er verliert. Bei einem Alarm ist genau das der wichtige Teil: Markiere ihn mit ★ und
+gib ihm einen zweiten, lokalen Weg, wie es die Vorschläge beschreiben.
 
 **Eine Integration läuft lokal, aber Unclouded sagt Cloud.** Bitte ein Issue mit der
 Integration und ihrer Einrichtung eröffnen.

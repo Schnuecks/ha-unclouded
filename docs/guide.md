@@ -6,7 +6,7 @@ This guide explains the panel step by step and how Unclouded comes to its result
 short overview and the installation see the [README](../README.md).
 
 - [The panel](#the-panel)
-- [What the verdicts mean](#what-the-verdicts-mean)
+- [What the groups mean](#what-the-groups-mean)
 - [How Unclouded classifies integrations](#how-unclouded-classifies-integrations)
 - [How automations are followed](#how-automations-are-followed)
 - [Important automations and repairs](#important-automations-and-repairs)
@@ -37,16 +37,16 @@ Open **Unclouded** in the sidebar. Only admins see it. From top to bottom:
 
 Every change you make in the panel is confirmed at the bottom of the screen.
 
-## What the verdicts mean
+## What the groups mean
 
-| Verdict | Meaning |
+The overview and the lists below it use the same four groups and colours:
+
+| Group | Meaning |
 |---|---|
-| **Keeps working** | Everything it uses is in your home or inside Home Assistant. |
-| **Works partly** | It runs, but some of its parts do not get through, for example a notification, or one of several triggers. |
-| **Stops working** | Without the internet it does nothing: its only trigger, a condition or all its actions need the internet. |
-| **Not sure** | Nothing is known to need the internet, but some part could not be classified. |
-
-**only notifications** marks automations where nothing but notifications is lost.
+| **Lose function or stop** (red) | Without the internet the automation is not triggered, a condition cannot be checked or something is not switched. **stops completely** marks those that then do nothing at all. |
+| **Only lose their notifications** (orange) | What the automation switches keeps working; only its notifications do not arrive. Automations that do nothing but notify are counted here too. |
+| **Not sure** (grey) | Nothing is known to need the internet, but some part could not be classified. |
+| **Keep working** (green) | Everything it uses is in your home or inside Home Assistant. |
 
 ## How Unclouded classifies integrations
 
@@ -112,9 +112,10 @@ every hour and after every change in the panel.
 **Does Unclouded cut the internet to test this?** No. It works from how integrations connect
 and never changes anything. The result is a careful estimate, not a measurement.
 
-**Why does an automation count as "works partly" although its notification is the only thing
-that matters to me?** Unclouded cannot know which part matters most. Mark it with ★ and the
-repair issue says that only the notification is lost.
+**An alarm that only sends a notification is listed under "Only lose their notifications",
+although it then does nothing. Why?** Because the notification is all it loses. For an alarm
+that is exactly the important part: mark it with ★ and give it a second, local way, as the
+suggestions describe.
 
 **An integration runs locally, but Unclouded says cloud.** Please open an issue with the
 integration and how it is set up.

@@ -34,8 +34,8 @@ words, what you can change.
 
 ## Features
 
-- **One sentence per automation:** whether it keeps working, works partly or stops, and
-  why – for example "Notification to Alex's phone does not arrive".
+- **One sentence per automation:** whether it keeps working, only loses its notifications
+  or loses function, and why – for example "Notification to Alex's phone does not arrive".
 - **Suggestions from your setup:** turn on local push, give important alerts a second, local
   way, detect presence through your router as well (it names the exact entry for each
   phone), devices behind a manufacturer's cloud, local text-to-speech.
