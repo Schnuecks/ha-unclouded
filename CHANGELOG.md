@@ -8,8 +8,8 @@ and the project uses [Semantic Versioning](https://semver.org/).
 
 ### Added
 - Sidebar panel that shows what in Home Assistant still works without the internet: an
-  overview with a bar split by what happens, one sentence per automation, technical details and the classification of every
-  integration, in English and German.
+  overview with a bar split by what happens, one sentence per automation, technical
+  details and the classification of every integration, in English and German.
 - Suggestions worked out from the setup: local push, a second local way for push-only
   alerts, local presence detection with the matching router entry for each phone, devices
   behind a manufacturer's cloud and local text-to-speech.
