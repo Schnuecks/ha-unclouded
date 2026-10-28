@@ -52,7 +52,7 @@ const STRINGS = {
     advice_local_push_why:
       "Notifications to {entries} go through a relay server on the internet. Without internet they do not arrive, not even while you are at home.",
     advice_local_push_how:
-      "In the Home Assistant app: Settings → Companion App → your server → turn on “Local Push”. Your home Wi-Fi has to be entered under “Internal URL”. Notifications then arrive at home without the internet.",
+      "In the Home Assistant app: Settings → Companion App → tap your server → “Internal URL”. Enter the address of Home Assistant in your home network (for example http://192.168.1.10:8123), add the name of your home Wi-Fi and leave “Local Push” on. The app needs location access to recognise the Wi-Fi. While the phone is on that Wi-Fi, notifications then arrive without the internet.",
     advice_local_fallback_title: "Give important alerts a second, local way",
     advice_local_fallback_why:
       "These automations only send a push notification. Without internet you would not notice anything, however important it is.",
@@ -174,7 +174,7 @@ const STRINGS = {
     advice_local_push_why:
       "Benachrichtigungen an {entries} laufen über einen Relay-Server im Internet. Ohne Internet kommen sie nicht an, auch nicht, wenn du zu Hause bist.",
     advice_local_push_how:
-      "In der Home-Assistant-App: Einstellungen → Companion App → dein Server → „Lokaler Push“ einschalten. Dafür muss unter „Interne URL“ dein WLAN eingetragen sein. Dann kommen Nachrichten zu Hause auch ohne Internet an.",
+      "In der Home-Assistant-App: Einstellungen → Companion App → deinen Server antippen → „Interne URL“. Dort die Adresse von Home Assistant im Heimnetz eintragen (zum Beispiel http://192.168.1.10:8123), den Namen deines WLANs hinzufügen und „Lokaler Push“ eingeschaltet lassen. Damit die App das WLAN erkennt, braucht sie die Standortfreigabe. Ist das Handy in diesem WLAN, kommen Nachrichten dann auch ohne Internet an.",
     advice_local_fallback_title: "Wichtigen Meldungen einen zweiten, lokalen Weg geben",
     advice_local_fallback_why:
       "Diese Automationen schicken nur eine Push-Nachricht. Ohne Internet bekommst du nichts davon mit, egal wie wichtig es ist.",
