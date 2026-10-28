@@ -88,6 +88,13 @@ const STRINGS = {
     say_all_local: "uses only devices in your home",
     details: "Technical details",
     howLabel: "How:",
+    matchIntro: "Found in your setup:",
+    matchKnown: "{integration} knows this phone as “{tracker}” ({entity}).",
+    matchDisabled:
+      "The entry is still disabled: Settings → Devices & services → Entities → open “{tracker}” → cog → turn on “Enabled”.",
+    matchAssign: "Then Settings → People → {person} → add {entity} under “Track device”.",
+    matchApple:
+      "So that the router recognises the iPhone again and again: on the iPhone, Settings → Wi-Fi → ⓘ next to your home Wi-Fi → “Private Wi-Fi Address” → “Fixed”.",
     savedOverride: "Saved. The automations have been checked again.",
     savedImportant: "Marked as important. If it needs the internet, it is listed under Settings → Repairs.",
     savedUnimportant: "No longer marked as important.",
@@ -126,6 +133,7 @@ const STRINGS = {
       entry_missing: "the integration behind it is no longer set up",
       device_missing: "the device no longer exists",
       user_override: "chosen by you",
+      person_local_tracker: "a device in your home network tells whether the person is at home",
     },
   },
   de: {
@@ -211,6 +219,13 @@ const STRINGS = {
     say_all_local: "nutzt nur Geräte bei dir zu Hause",
     details: "Technische Details",
     howLabel: "So geht's:",
+    matchIntro: "In deiner Einrichtung gefunden:",
+    matchKnown: "{integration} kennt dieses Handy als „{tracker}“ ({entity}).",
+    matchDisabled:
+      "Der Eintrag ist noch deaktiviert: Einstellungen → Geräte & Dienste → Entitäten → „{tracker}“ öffnen → Zahnrad → „Aktiviert“ einschalten.",
+    matchAssign: "Dann Einstellungen → Personen → {person} → unter „Zu verfolgende Geräte“ {entity} hinzufügen.",
+    matchApple:
+      "Damit der Router das iPhone immer wiedererkennt: am iPhone Einstellungen → WLAN → ⓘ neben deinem Heim-WLAN → „Private WLAN-Adresse“ → „Fest“.",
     savedOverride: "Gespeichert. Die Automationen wurden neu bewertet.",
     savedImportant: "Als wichtig markiert. Braucht sie Internet, steht sie unter Einstellungen → Reparaturen.",
     savedUnimportant: "Nicht mehr als wichtig markiert.",
@@ -249,6 +264,7 @@ const STRINGS = {
       entry_missing: "die Integration dahinter ist nicht mehr eingerichtet",
       device_missing: "das Gerät gibt es nicht mehr",
       user_override: "von dir festgelegt",
+      person_local_tracker: "ein Gerät im Heimnetz zeigt, ob die Person zu Hause ist",
     },
   },
 };
@@ -422,6 +438,33 @@ class UncloudedPanel extends HTMLElement {
       </details>`;
   }
 
+  // Concrete steps per phone instead of the general advice.
+  _renderMatches(matches) {
+    const t = this._t;
+    const steps = matches.map((m) => {
+      const values = {
+        integration: this._entry(m.entry_id)?.integration_name || "",
+        tracker: m.tracker_name,
+        entity: m.tracker,
+        person: m.person_name,
+      };
+      return `
+        <li>
+          <strong>${esc(m.phone_name)}</strong> (${esc(m.person_name)}):
+          ${esc(this._fmt(t.matchKnown, values))}
+          ${m.disabled ? esc(this._fmt(t.matchDisabled, values)) : ""}
+          ${esc(this._fmt(t.matchAssign, values))}
+        </li>`;
+    });
+    const apple = matches.some((m) => /iphone|ipad/i.test(m.phone_name));
+    return `
+      <div class="how">
+        <p><strong>${esc(t.howLabel)}</strong> ${esc(t.matchIntro)}</p>
+        <ul class="steps">${steps.join("")}</ul>
+        ${apple ? `<p class="muted">${esc(t.matchApple)}</p>` : ""}
+      </div>`;
+  }
+
   _renderAdvice() {
     const t = this._t;
     if (!this._advice.length) return "";
@@ -443,7 +486,11 @@ class UncloudedPanel extends HTMLElement {
         <li class="advice">
           <div class="advice-head"><span class="num">${i + 1}</span><h3>${esc(t[`advice_${a.key}_title`])}</h3></div>
           <p>${esc(this._fmt(t[`advice_${a.key}_why`], values))}</p>
-          <p class="how"><strong>${esc(t.howLabel)}</strong> ${esc(this._fmt(how, values))}</p>
+          ${
+            a.key === "presence" && a.matches?.length
+              ? this._renderMatches(a.matches)
+              : `<p class="how"><strong>${esc(t.howLabel)}</strong> ${esc(this._fmt(how, values))}</p>`
+          }
           <details class="affected">
             <summary>${esc(
               a.automations.length === 1 ? t.affects1 : this._fmt(t.affects, { n: a.automations.length })
@@ -778,6 +825,9 @@ const STYLE = `
     justify-content: center; font-size: 13px; font-weight: 500; color: var(--text-primary-color, #fff);
     background: var(--primary-color); }
   .how { color: var(--primary-text-color); }
+  ul.steps { margin: 4px 0 6px 34px; padding-left: 18px; list-style: disc; line-height: 1.5; }
+  ul.steps li { padding: 3px 0; }
+  div.how p.muted { font-size: 13px; }
   details.affected { margin-left: 34px; font-size: 14px; }
   details.affected summary { color: var(--primary-color); }
   ul.names { list-style: disc; padding-left: 20px; margin: 4px 0 0; }

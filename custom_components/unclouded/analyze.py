@@ -185,7 +185,12 @@ class Analyzer:
             return _worst(self.entity_reach(p, seen) for p in persons)
         if domain == "person":
             trackers = state.attributes.get("device_trackers", []) if state else []
-            return _worst(self._tracker_reach(t, seen) for t in trackers)
+            sources = [self._tracker_reach(t, seen) for t in trackers]
+            # One tracker in the home network is enough to tell home from away.
+            for source in sources:
+                if source[0] is Reach.LOCAL:
+                    return Reach.LOCAL, "person_local_tracker", source[2]
+            return _worst(sources)
 
         platform = domain
         if entry := self.ent_reg.async_get(entity_id):

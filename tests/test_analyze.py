@@ -471,3 +471,31 @@ async def test_helpers_referring_to_each_other_terminate(
         },
     )
     assert report.verdict is Verdict.WORKS
+
+
+async def test_person_with_local_tracker_is_local(hass: HomeAssistant, setup) -> None:
+    """A tracker in the home network next to the phone is enough for presence."""
+    er.async_get(hass).async_get_or_create(
+        "device_tracker",
+        "esphome",
+        "router_phone",
+        suggested_object_id="router_phone",
+        config_entry=setup["local"],
+    )
+    hass.states.async_set(
+        "person.someone",
+        "home",
+        {"device_trackers": ["device_tracker.phone", "device_tracker.router_phone"]},
+    )
+    report = await _analyze(
+        hass,
+        {
+            "triggers": [
+                {"trigger": "numeric_state", "entity_id": "zone.home", "below": 1}
+            ],
+            "actions": [LOCAL_ACTION],
+        },
+    )
+    assert report.verdict is Verdict.WORKS
+    (zone,) = [d for d in report.dependencies if d.ref == "zone.home"]
+    assert zone.reason == "person_local_tracker"
