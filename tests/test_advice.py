@@ -240,3 +240,14 @@ async def test_person_with_local_tracker_needs_nothing(hass: HomeAssistant) -> N
     reports = await async_analyze_automations(hass)
     entries = await async_classify_entries(hass)
     assert "presence" not in {a.key for a in build_advice(hass, reports, entries)}
+
+
+async def test_apostrophe_is_dropped_like_in_host_names(hass: HomeAssistant) -> None:
+    """ "Sam's phone" shows up in routers as "sams-phone"."""
+    await _presence_setup(hass, ["sams-phone"])
+    dr.async_get(hass).async_update_device(
+        er.async_get(hass).async_get("device_tracker.phone_alex").device_id,
+        name="Sam's phone",
+    )
+    (match,) = (await _presence(hass)).matches
+    assert match["tracker_name"] == "sams-phone"

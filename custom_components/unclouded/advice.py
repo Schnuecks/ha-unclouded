@@ -117,10 +117,13 @@ def build_advice(
 _FILLER = {"von", "de", "der", "of", "the", "my", "mein", "meine", "la", "le", "di"}
 
 
+def _split(name: str | None) -> list[str]:
+    # Host names drop the apostrophe: "Sam's phone" is "sams-phone".
+    return re.findall(r"[a-z0-9]+", re.sub(r"['’]", "", (name or "").lower()))
+
+
 def _words(name: str | None) -> frozenset[str]:
-    return frozenset(
-        w for w in re.findall(r"[a-z0-9]+", (name or "").lower()) if w not in _FILLER
-    )
+    return frozenset(w for w in _split(name) if w not in _FILLER)
 
 
 def _local_trackers_for_phones(
@@ -161,8 +164,7 @@ def _local_trackers_for_phones(
             phone_words = _words(phone_name)
             wanted = {phone_words}
             if phone_words:
-                first = re.findall(r"[a-z0-9]+", phone_name.lower())[0]
-                wanted.add(frozenset({first}) | _words(person.name))
+                wanted.add(frozenset({_split(phone_name)[0]}) | _words(person.name))
             for candidate in local:
                 names = (
                     candidate.name,

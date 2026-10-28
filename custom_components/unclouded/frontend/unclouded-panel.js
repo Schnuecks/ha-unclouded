@@ -29,10 +29,13 @@ const STRINGS = {
     decidedHint: "You classified these integrations yourself. You can change it here at any time.",
     integrationNoEntry: "entities without config entry",
     // Summary and explanation
-    summaryWorks: "If the internet goes down, {works} of your {total} automations keep working as usual.",
-    summaryNotify: "{n} still run but cannot send their notifications.",
-    summaryLoss: "{n} lose part of what they do or stop altogether.",
-    summaryUnknown: "{n} could not be checked completely.",
+    heroLabel: "If the internet goes down",
+    heroOf: "of {total}",
+    heroText: "automations keep working as usual",
+    legend_works: "keep working",
+    legend_notify: "only lose their notifications",
+    legend_loss: "lose function or stop",
+    legend_unknown: "not sure",
     summaryAllGood: "Everything runs inside your home. An internet outage does not affect your automations.",
     whatTitle: "What is this about?",
     whatText1:
@@ -162,10 +165,13 @@ const STRINGS = {
     decided: "Von dir festgelegt",
     decidedHint: "Diese Integrationen hast du selbst eingestuft. Hier kannst du es jederzeit ändern.",
     integrationNoEntry: "Entitäten ohne Einrichtung",
-    summaryWorks: "Fällt das Internet aus, laufen {works} deiner {total} Automationen ganz normal weiter.",
-    summaryNotify: "{n} laufen, können aber ihre Benachrichtigungen nicht verschicken.",
-    summaryLoss: "{n} verlieren einen Teil ihrer Funktion oder fallen ganz aus.",
-    summaryUnknown: "{n} ließen sich nicht vollständig prüfen.",
+    heroLabel: "Wenn das Internet ausfällt",
+    heroOf: "von {total}",
+    heroText: "Automationen laufen normal weiter",
+    legend_works: "laufen weiter",
+    legend_notify: "verlieren nur Benachrichtigungen",
+    legend_loss: "verlieren Funktion oder fallen aus",
+    legend_unknown: "unklar",
     summaryAllGood: "Alles läuft bei dir zu Hause. Ein Internetausfall betrifft deine Automationen nicht.",
     whatTitle: "Worum geht es?",
     whatText1:
@@ -398,24 +404,49 @@ class UncloudedPanel extends HTMLElement {
     return text.charAt(0).toUpperCase() + text.slice(1) + ".";
   }
 
+  // The overview: one big number, a bar split by what happens, and a legend that
+  // jumps to the first automation of each kind.
   _renderSummary() {
     const t = this._t;
     const all = this._automations;
-    const count = (fn) => all.filter(fn).length;
-    const works = count((a) => a.verdict === "works");
-    const notify = count((a) => a.only_notifications);
-    const unknown = count((a) => a.verdict === "unknown");
-    const loss = count((a) => ["fails", "degraded"].includes(a.verdict) && !a.only_notifications);
-    const lines =
-      works === all.length
-        ? [t.summaryAllGood]
-        : [
-            this._fmt(t.summaryWorks, { works, total: all.length }),
-            notify ? this._fmt(t.summaryNotify, { n: notify }) : "",
-            loss ? this._fmt(t.summaryLoss, { n: loss }) : "",
-            unknown ? this._fmt(t.summaryUnknown, { n: unknown }) : "",
-          ];
-    return `<p class="summary">${lines.filter(Boolean).map(esc).join(" ")}</p>`;
+    if (all.length && all.every((a) => a.verdict === "works"))
+      return `<section class="card hero"><p class="hero-good">${esc(t.summaryAllGood)}</p></section>`;
+    const kinds = {
+      works: (a) => a.verdict === "works",
+      notify: (a) => a.only_notifications,
+      loss: (a) => ["fails", "degraded"].includes(a.verdict) && !a.only_notifications,
+      unknown: (a) => a.verdict === "unknown",
+    };
+    const parts = Object.entries(kinds)
+      .map(([kind, fn]) => ({ kind, items: all.filter(fn) }))
+      .filter((p) => p.items.length);
+    const works = all.filter(kinds.works).length;
+    const bar = parts
+      .map(
+        (p) => `<span class="seg ${p.kind}" style="flex: ${p.items.length}"
+          title="${p.items.length} ${esc(t[`legend_${p.kind}`])}"></span>`
+      )
+      .join("");
+    const legend = parts
+      .map(
+        (p) => `
+        <button class="legend" data-jump="${esc(p.items[0].entity_id)}">
+          <span class="dot ${p.kind}"></span><strong>${p.items.length}</strong>
+          ${esc(t[`legend_${p.kind}`])}
+        </button>`
+      )
+      .join("");
+    return `
+      <section class="card hero">
+        <div class="hero-label">${esc(t.heroLabel)}</div>
+        <div class="hero-main">
+          <span class="big">${works}</span>
+          <span class="of">${esc(this._fmt(t.heroOf, { total: all.length }))}</span>
+          <span class="text">${esc(t.heroText)}</span>
+        </div>
+        <div class="bar">${bar}</div>
+        <div class="legends">${legend}</div>
+      </section>`;
   }
 
   _whatSeen() {
@@ -533,10 +564,12 @@ class UncloudedPanel extends HTMLElement {
       title="${esc(automation.important ? t.unmarkImportant : t.markImportant)}">${automation.important ? "★" : "☆"}</button>`;
     const row = `${star}<span class="name">${esc(automation.name)}</span>${flag}${link}`;
     const say = `<div class="say">${esc(this._say(automation))}</div>`;
-    if (!problems.length) return `<li class="automation"><div class="row">${row}</div>${say}</li>`;
+    const id = esc(automation.entity_id);
+    if (!problems.length)
+      return `<li class="automation" data-entity="${id}"><div class="row">${row}</div>${say}</li>`;
     const open = this._open.has(automation.entity_id) ? " open" : "";
     return `
-      <li class="automation">
+      <li class="automation" data-entity="${id}">
         <div class="row">${row}</div>
         ${say}
         <details class="tech" data-id="${esc(automation.entity_id)}"${open}>
@@ -552,13 +585,6 @@ class UncloudedPanel extends HTMLElement {
     const groups = Object.fromEntries(VERDICTS.map((v) => [v, []]));
     for (const a of this._automations) groups[a.verdict].push(a);
     const byName = (a, b) => a.name.localeCompare(b.name);
-    const tiles = VERDICTS.map(
-      (v) => `
-        <a class="tile ${v}${groups[v].length ? "" : " empty"}" href="#${v}">
-          <span class="count">${groups[v].length}</span>
-          <span>${esc(t[`verdict_${v}`])}</span>
-        </a>`
-    ).join("");
     const sections = VERDICTS.filter((v) => groups[v].length)
       .map(
         (v) => `
@@ -571,7 +597,7 @@ class UncloudedPanel extends HTMLElement {
         </section>`
       )
       .join("");
-    return `<div class="tiles">${tiles}</div>${sections}`;
+    return sections;
   }
 
   // Only offered where Unclouded could not find out anything by itself.
@@ -696,7 +722,7 @@ class UncloudedPanel extends HTMLElement {
     if (this._error) body = `<p class="error">${esc(t.error)}: ${esc(this._error)}</p>`;
     else if (this._automations)
       body =
-        `<section class="card">${this._renderSummary()}</section>` +
+        this._renderSummary() +
         this._renderWhat() +
         this._renderDecide() +
         this._renderAdvice() +
@@ -728,10 +754,14 @@ class UncloudedPanel extends HTMLElement {
       this._load();
     });
     // In-page links would change the panel's URL; scroll instead.
-    this.shadowRoot.querySelectorAll("a.tile").forEach((el) =>
-      el.addEventListener("click", (e) => {
-        e.preventDefault();
-        $(el.getAttribute("href"))?.scrollIntoView({ behavior: "smooth" });
+    // Jump to the first automation of a kind; in-page links would change the URL.
+    this.shadowRoot.querySelectorAll("button[data-jump]").forEach((el) =>
+      el.addEventListener("click", () => {
+        const row = this.shadowRoot
+          .querySelector(`[data-entity="${el.dataset.jump}"]`);
+        row?.scrollIntoView({ behavior: "smooth", block: "center" });
+        row?.classList.add("flash");
+        setTimeout(() => row?.classList.remove("flash"), 1600);
       })
     );
     $("#what-seen")?.addEventListener("click", () => {
@@ -776,20 +806,31 @@ const STYLE = `
   .card { display: block; background: var(--card-background-color, #fff); border-radius: var(--ha-card-border-radius, 12px);
     border: 1px solid var(--divider-color); padding: 16px; margin-bottom: 16px; }
   h2 { display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 500; margin: 0 0 4px; }
-  .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
-  .tile { display: flex; flex-direction: column; gap: 2px; padding: 12px 16px; text-decoration: none;
-    color: var(--primary-text-color); background: var(--card-background-color, #fff);
-    border: 1px solid var(--divider-color); border-left: 4px solid; border-radius: var(--ha-card-border-radius, 12px); }
-  .tile .count { font-size: 28px; font-weight: 500; }
-  .tile.fails { border-left-color: var(--uc-fails); }
-  .tile.degraded { border-left-color: var(--uc-degraded); }
-  .tile.unknown { border-left-color: var(--uc-unknown); }
-  .tile.works { border-left-color: var(--uc-works); }
   .dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
   .dot.fails { background: var(--uc-fails); }
   .dot.degraded { background: var(--uc-degraded); }
   .dot.unknown { background: var(--uc-unknown); }
   .dot.works { background: var(--uc-works); }
+  .dot.notify { background: var(--uc-degraded); }
+  .dot.loss { background: var(--uc-fails); }
+  .card.hero { padding: 20px; }
+  .hero-label { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--secondary-text-color); }
+  .hero-main { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; margin: 4px 0 14px; }
+  .hero-main .big { font-size: 48px; font-weight: 500; line-height: 1; color: var(--uc-works); }
+  .hero-main .of { font-size: 22px; color: var(--secondary-text-color); }
+  .hero-main .text { font-size: 20px; }
+  .hero-good { font-size: 18px; margin: 0; }
+  .bar { display: flex; gap: 3px; height: 14px; border-radius: 7px; overflow: hidden; }
+  .seg.works { background: var(--uc-works); }
+  .seg.notify { background: var(--uc-degraded); }
+  .seg.loss { background: var(--uc-fails); }
+  .seg.unknown { background: var(--uc-unknown); }
+  .legends { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 12px; }
+  button.legend { font: inherit; font-size: 14px; display: inline-flex; align-items: center; gap: 6px;
+    border: 0; padding: 2px 0; background: transparent; color: var(--primary-text-color); cursor: pointer; }
+  button.legend:hover { text-decoration: underline; }
+  li.automation.flash { animation: flash 1.6s ease-out; }
+  @keyframes flash { from { background: var(--secondary-background-color); } to { background: transparent; } }
   ul { list-style: none; padding: 0; margin: 8px 0 0; }
   li.automation { padding: 8px 0; border-top: 1px solid var(--divider-color); }
   .row { display: flex; align-items: baseline; gap: 6px 8px; flex-wrap: wrap; }
@@ -800,7 +841,6 @@ const STYLE = `
   summary::-webkit-details-marker { display: none; }
   details.tech > summary::before { content: "▸ "; }
   details.tech[open] > summary::before { content: "▾ "; }
-  .tile.empty { opacity: .55; }
   button.star { font: inherit; font-size: 18px; line-height: 1; border: 0; background: transparent;
     padding: 0 2px; cursor: pointer; color: var(--secondary-text-color); align-self: center; }
   button.star.on { color: var(--warning-color, #ff9800); }
@@ -861,8 +901,7 @@ const STYLE = `
   .error { color: var(--uc-fails); }
   @media (max-width: 600px) {
     main { padding: 8px; }
-    .tiles { grid-template-columns: repeat(2, 1fr); }
-    .part { min-width: 0; margin-right: 4px; }
+      .part { min-width: 0; margin-right: 4px; }
   }
 `;
 
