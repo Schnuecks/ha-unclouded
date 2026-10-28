@@ -17,8 +17,10 @@ short overview and the installation see the [README](../README.md).
 
 Open **Unclouded** in the sidebar. Only admins see it. From top to bottom:
 
-1. **Summary:** one sentence on how many automations keep working without the internet,
-   how many only lose their notifications and how many lose real function.
+1. **Overview:** how many automations keep working without the internet, as a big number
+   and a bar split into keep working, only lose their notifications, lose function or stop,
+   and not sure. A click on an entry of the legend jumps to the first automation of that
+   kind.
 2. **What is this about?** A short explanation, open on the first visit. **Got it** closes it
    for good in this browser.
 3. **Please decide** (only if needed): integrations that do not say how they connect. If you
@@ -27,7 +29,7 @@ Open **Unclouded** in the sidebar. Only admins see it. From top to bottom:
 4. **What you can do:** suggestions worked out from your setup, the most useful first. Each
    says why it matters and how to do it; **Concerns … automations** lists the automations it
    would help.
-5. **Tiles and lists of automations**, grouped by what happens to them without the internet.
+5. **Lists of automations**, grouped by what happens to them without the internet.
    Each automation has one sentence that says why, **Open ›** goes to the automation editor
    and **Technical details** lists every trigger, condition and action that needs the
    internet, with the integration behind it and the reason.

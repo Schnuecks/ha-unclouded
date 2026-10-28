@@ -17,7 +17,7 @@ du tun kannst, damit das Wichtige weiter funktioniert.
 **Neu hier?** Die [Anleitung](docs/anleitung.md) erklärt das Panel Schritt für Schritt und
 wie Unclouded zu seinen Ergebnissen kommt.
 
-<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/overview-de-dark.png"><img src="docs/screenshots/overview-de.png" width="720" alt="Fazit und Vorschläge"></picture></p>
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/overview-de-dark.png"><img src="docs/screenshots/overview-de.png" width="720" alt="Übersicht und Vorschläge"></picture></p>
 
 ## Warum
 
@@ -58,8 +58,8 @@ klaren Worten, was du ändern kannst.
 
 ## So funktioniert es
 
-1. Öffne **Unclouded** in der Seitenleiste. Das Fazit oben sagt, wie viele Automationen ohne
-   Internet weiterlaufen.
+1. Öffne **Unclouded** in der Seitenleiste. Die Übersicht oben zeigt, wie viele Automationen
+   ohne Internet weiterlaufen und was mit den anderen passiert.
 2. **Was du tun kannst** listet Vorschläge, das Nützlichste zuerst, jeweils mit Warum und
    So geht's.
 3. Darunter steht jede Automation danach sortiert, was mit ihr passiert, mit einem Satz zur

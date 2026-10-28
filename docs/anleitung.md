@@ -18,8 +18,10 @@ Ergebnissen kommt. Einen kurzen Überblick und die Installation gibt es in der
 
 Öffne **Unclouded** in der Seitenleiste. Nur Administratoren sehen es. Von oben nach unten:
 
-1. **Fazit:** ein Satz dazu, wie viele Automationen ohne Internet weiterlaufen, wie viele nur
-   ihre Benachrichtigungen verlieren und wie viele echte Funktionen verlieren.
+1. **Übersicht:** wie viele Automationen ohne Internet weiterlaufen, als große Zahl und als
+   Balken, aufgeteilt in laufen weiter, verlieren nur Benachrichtigungen, verlieren Funktion
+   oder fallen aus, und unklar. Ein Klick auf einen Eintrag der Legende springt zur ersten
+   Automation dieser Art.
 2. **Worum geht es?** Eine kurze Erklärung, beim ersten Besuch aufgeklappt. **Verstanden**
    schließt sie in diesem Browser dauerhaft.
 3. **Bitte festlegen** (nur wenn nötig): Integrationen, die nicht angeben, wie sie sich
@@ -29,8 +31,7 @@ Ergebnissen kommt. Einen kurzen Überblick und die Installation gibt es in der
 4. **Was du tun kannst:** Vorschläge aus deiner Einrichtung, das Nützlichste zuerst. Jeder
    sagt, warum er wichtig ist und wie es geht; **Betrifft … Automationen** zeigt die
    Automationen, denen er hilft.
-5. **Kacheln und Listen der Automationen**, sortiert danach, was ohne Internet mit ihnen
-   passiert. Jede Automation hat einen Satz zur Begründung, **Öffnen ›** führt in den
+5. **Listen der Automationen**, sortiert danach, was ohne Internet mit ihnen passiert. Jede Automation hat einen Satz zur Begründung, **Öffnen ›** führt in den
    Automationseditor, und **Technische Details** zeigt jeden Auslöser, jede Bedingung und
    jede Aktion, die Internet braucht, mit der Integration dahinter und dem Grund.
 6. **Integrationen:** jede eingerichtete Integration mit ihrer Einstufung und dem Grund.

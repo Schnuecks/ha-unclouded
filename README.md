@@ -17,7 +17,7 @@ can do so that the important things keep working.
 **New here?** The [guide](docs/guide.md) explains the panel step by step and how Unclouded
 comes to its results.
 
-<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/overview-dark.png"><img src="docs/screenshots/overview.png" width="720" alt="Summary and suggestions"></picture></p>
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/overview-dark.png"><img src="docs/screenshots/overview.png" width="720" alt="Overview and suggestions"></picture></p>
 
 ## Why
 
@@ -56,8 +56,8 @@ words, what you can change.
 
 ## How it works
 
-1. Open **Unclouded** in the sidebar. The summary at the top says how many automations
-   keep working without the internet.
+1. Open **Unclouded** in the sidebar. The overview at the top shows how many automations
+   keep working without the internet and what happens to the others.
 2. **What you can do** lists suggestions, the most useful first, each with why it matters
    and how to do it.
 3. Below, every automation is listed by what happens to it, with one sentence that says
