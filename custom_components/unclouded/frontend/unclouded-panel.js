@@ -28,6 +28,64 @@ const STRINGS = {
     decided: "Decided by you",
     decidedHint: "You classified these integrations yourself. You can change it here at any time.",
     integrationNoEntry: "entities without config entry",
+    // Summary and explanation
+    summaryWorks: "If the internet goes down, {works} of your {total} automations keep working as usual.",
+    summaryNotify: "{n} still run but cannot send their notifications.",
+    summaryLoss: "{n} lose part of what they do or stop altogether.",
+    summaryUnknown: "{n} could not be checked completely.",
+    summaryAllGood: "Everything runs inside your home. An internet outage does not affect your automations.",
+    whatTitle: "What is this about?",
+    whatText1:
+      "Many devices and services in Home Assistant work through servers on the internet: those of the manufacturer, of Apple or Google, or of a cloud service. If the internet is down, the provider has an outage or switches its service off, something at home stops working too.",
+    whatText2:
+      "Unclouded checks every automation: what triggers it, what it checks and what it does. It shows what still works without the internet, what does not, and what you can do so that the important things keep working.",
+    whatText3: "Unclouded only reads. It changes nothing in your setup.",
+    hide: "Got it",
+    // Advice
+    adviceTitle: "What you can do",
+    adviceHint: "Suggestions worked out from your setup, the most useful first.",
+    affects: "Concerns {n} automations",
+    affects1: "Concerns 1 automation",
+    showAffected: "Show affected automations",
+    noAdvice: "Nothing to do. Well done.",
+    advice_local_push_title: "Turn on local push",
+    advice_local_push_why:
+      "Notifications to {entries} go through a relay server on the internet. Without internet they do not arrive, not even while you are at home.",
+    advice_local_push_how:
+      "In the Home Assistant app: Settings → Companion App → your server → turn on “Local Push”. Your home Wi-Fi has to be entered under “Internal URL”. Notifications then arrive at home without the internet.",
+    advice_local_fallback_title: "Give important alerts a second, local way",
+    advice_local_fallback_why:
+      "These automations only send a push notification. Without internet you would not notice anything, however important it is.",
+    advice_local_fallback_how:
+      "For the ones that matter, add a signal that works at home: let a light flash, make an announcement on a speaker or show a message on the TV. Mark them with ★ and Home Assistant reminds you under Repairs while they still depend on the internet.",
+    advice_presence_title: "Detect presence locally as well",
+    advice_presence_why:
+      "Whether someone is at home only comes from the phone ({entries}). While away it reports over the internet; if that is down, Home Assistant keeps the last known state.",
+    advice_presence_how_helpers:
+      "Through {helpers}, Home Assistant already sees devices in your network. Add the phone found there to the person as a second tracker (Settings → People). Coming home is then noticed without the internet.",
+    advice_presence_how:
+      "Add a local tracker, for example from your router, and assign it to the person (Settings → People).",
+    advice_cloud_devices_title: "Devices behind a manufacturer's cloud",
+    advice_cloud_devices_why:
+      "With {entries}, everything goes through the manufacturer's servers. Without internet, or once the manufacturer shuts the service down, nothing responds.",
+    advice_cloud_devices_how:
+      "Check whether they can be connected locally; some integrations offer a local mode. Otherwise, prefer a device that works locally when you replace it.",
+    advice_local_tts_title: "Make announcements locally",
+    advice_local_tts_why: "Spoken announcements are created by a cloud service ({entries}).",
+    advice_local_tts_how:
+      "Set up local text-to-speech, for example the Piper add-on, and use it in these automations.",
+    // Sentences per automation
+    say_notify_lost: "notification to {who} does not arrive",
+    say_notify_home: "notification to {who} only arrives at home",
+    say_tts: "announcement via {who} is not made",
+    say_trigger: "{what} ({who}) comes from the cloud, so the automation is not triggered",
+    say_presence: "presence from phones only arrives over the internet while away",
+    say_condition: "condition on {what} ({who}) cannot be checked",
+    say_action: "{what} ({who}) is not switched",
+    say_unknown: "unclear how {what} connects",
+    say_all_local: "uses only devices in your home",
+    details: "Technical details",
+    howLabel: "How:",
     savedOverride: "Saved. The automations have been checked again.",
     savedImportant: "Marked as important. If it needs the internet, it is listed under Settings → Repairs.",
     savedUnimportant: "No longer marked as important.",
@@ -94,6 +152,61 @@ const STRINGS = {
     decided: "Von dir festgelegt",
     decidedHint: "Diese Integrationen hast du selbst eingestuft. Hier kannst du es jederzeit ändern.",
     integrationNoEntry: "Entitäten ohne Einrichtung",
+    summaryWorks: "Fällt das Internet aus, laufen {works} deiner {total} Automationen ganz normal weiter.",
+    summaryNotify: "{n} laufen, können aber ihre Benachrichtigungen nicht verschicken.",
+    summaryLoss: "{n} verlieren einen Teil ihrer Funktion oder fallen ganz aus.",
+    summaryUnknown: "{n} ließen sich nicht vollständig prüfen.",
+    summaryAllGood: "Alles läuft bei dir zu Hause. Ein Internetausfall betrifft deine Automationen nicht.",
+    whatTitle: "Worum geht es?",
+    whatText1:
+      "Viele Geräte und Dienste in Home Assistant arbeiten über Server im Internet: die des Herstellers, von Apple oder Google oder eines Cloud-Dienstes. Ist das Internet weg, hat der Anbieter eine Störung oder schaltet er seinen Dienst ab, funktioniert auch bei dir zu Hause etwas nicht mehr.",
+    whatText2:
+      "Unclouded prüft jede Automation: was sie auslöst, was sie prüft und was sie tut. Es zeigt, was ohne Internet weiterläuft, was nicht, und was du tun kannst, damit das Wichtige auch ohne Internet funktioniert.",
+    whatText3: "Unclouded liest nur. Es ändert nichts an deiner Einrichtung.",
+    hide: "Verstanden",
+    adviceTitle: "Was du tun kannst",
+    adviceHint: "Vorschläge aus deiner Einrichtung, das Nützlichste zuerst.",
+    affects: "Betrifft {n} Automationen",
+    affects1: "Betrifft 1 Automation",
+    showAffected: "Betroffene Automationen zeigen",
+    noAdvice: "Nichts zu tun. Gut gemacht.",
+    advice_local_push_title: "Lokalen Push einschalten",
+    advice_local_push_why:
+      "Benachrichtigungen an {entries} laufen über einen Relay-Server im Internet. Ohne Internet kommen sie nicht an, auch nicht, wenn du zu Hause bist.",
+    advice_local_push_how:
+      "In der Home-Assistant-App: Einstellungen → Companion App → dein Server → „Lokaler Push“ einschalten. Dafür muss unter „Interne URL“ dein WLAN eingetragen sein. Dann kommen Nachrichten zu Hause auch ohne Internet an.",
+    advice_local_fallback_title: "Wichtigen Meldungen einen zweiten, lokalen Weg geben",
+    advice_local_fallback_why:
+      "Diese Automationen schicken nur eine Push-Nachricht. Ohne Internet bekommst du nichts davon mit, egal wie wichtig es ist.",
+    advice_local_fallback_how:
+      "Ergänze bei den wichtigen ein Signal, das zu Hause funktioniert: eine Lampe blinken lassen, eine Durchsage über einen Lautsprecher oder einen Hinweis auf dem Fernseher. Markiere sie mit ★, dann erinnert Home Assistant unter Reparaturen daran, solange sie vom Internet abhängen.",
+    advice_presence_title: "Anwesenheit auch lokal erkennen",
+    advice_presence_why:
+      "Ob jemand zu Hause ist, kommt nur vom Handy ({entries}). Unterwegs meldet es sich über das Internet; fällt das aus, behält Home Assistant den letzten Stand.",
+    advice_presence_how_helpers:
+      "Über {helpers} sieht Home Assistant die Geräte in deinem Netz schon. Füge das Handy von dort der Person als zweiten Tracker hinzu (Einstellungen → Personen). Dann wird das Heimkommen auch ohne Internet erkannt.",
+    advice_presence_how:
+      "Ergänze einen lokalen Tracker, etwa über deinen Router, und ordne ihn der Person zu (Einstellungen → Personen).",
+    advice_cloud_devices_title: "Geräte hinter einer Hersteller-Cloud",
+    advice_cloud_devices_why:
+      "Bei {entries} läuft alles über Server des Herstellers. Ohne Internet, oder wenn der Hersteller den Dienst einstellt, reagiert nichts.",
+    advice_cloud_devices_how:
+      "Prüfe, ob sie sich lokal einbinden lassen; manche Integrationen haben einen lokalen Modus. Sonst beim nächsten Austausch ein Gerät wählen, das lokal arbeitet.",
+    advice_local_tts_title: "Durchsagen lokal erzeugen",
+    advice_local_tts_why: "Gesprochene Durchsagen erzeugt ein Cloud-Dienst ({entries}).",
+    advice_local_tts_how:
+      "Richte eine lokale Sprachausgabe ein, zum Beispiel das Add-on Piper, und nutze sie in diesen Automationen.",
+    say_notify_lost: "Benachrichtigung an {who} kommt nicht an",
+    say_notify_home: "Benachrichtigung an {who} kommt nur zu Hause an",
+    say_tts: "Durchsage über {who} entfällt",
+    say_trigger: "{what} ({who}) kommt aus der Cloud, die Automation löst nicht aus",
+    say_presence: "Anwesenheit kommt unterwegs nur über das Internet",
+    say_condition: "Bedingung zu {what} ({who}) lässt sich nicht prüfen",
+    say_action: "{what} ({who}) wird nicht geschaltet",
+    say_unknown: "unklar, wie sich {what} verbindet",
+    say_all_local: "nutzt nur Geräte bei dir zu Hause",
+    details: "Technische Details",
+    howLabel: "So geht's:",
     savedOverride: "Gespeichert. Die Automationen wurden neu bewertet.",
     savedImportant: "Als wichtig markiert. Braucht sie Internet, steht sie unter Einstellungen → Reparaturen.",
     savedUnimportant: "Nicht mehr als wichtig markiert.",
@@ -184,6 +297,7 @@ class UncloudedPanel extends HTMLElement {
         this._hass.callWS({ type: "unclouded/entries" }),
       ]);
       this._automations = automations.automations;
+      this._advice = automations.advice || [];
       this._entries = entries.entries;
       this._overrides = entries.overrides || {};
       this._error = null;
@@ -224,6 +338,120 @@ class UncloudedPanel extends HTMLElement {
     });
   }
 
+  _fmt(text, values) {
+    return text.replace(/\{(\w+)\}/g, (_, key) => values[key] ?? "");
+  }
+
+  _list(items) {
+    try {
+      return new Intl.ListFormat(this._hass.language || "en", { type: "conjunction" }).format(items);
+    } catch (err) {
+      return items.join(", ");
+    }
+  }
+
+  _titles(entryIds) {
+    return this._list([...new Set(entryIds.map((id) => this._entry(id)?.title).filter(Boolean))]);
+  }
+
+  _name(entityId) {
+    return this._hass.states[entityId]?.attributes.friendly_name || entityId;
+  }
+
+  // One plain sentence per automation instead of the technical list.
+  _say(automation) {
+    const t = this._t;
+    const phrases = this._problems(automation).map((d) => {
+      const who = this._entry(d.entry_id)?.title || d.ref;
+      const what = d.kind === "entity" ? this._name(d.ref) : this._refLabel(d);
+      if (d.part === "action" && d.notification && d.ref.startsWith("notify."))
+        return this._fmt(d.reach === "partial" ? t.say_notify_home : t.say_notify_lost, { who });
+      if (d.part === "action" && d.ref.startsWith("tts.")) return this._fmt(t.say_tts, { who });
+      if (d.reason === "mobile_app_presence") return t.say_presence;
+      if (d.reach === "unknown") return this._fmt(t.say_unknown, { what });
+      if (d.part === "trigger") return this._fmt(t.say_trigger, { what, who });
+      if (d.part === "condition") return this._fmt(t.say_condition, { what, who });
+      return this._fmt(t.say_action, { what, who });
+    });
+    const unique = [...new Set(phrases)];
+    const text = unique.length ? unique.join("; ") : t.say_all_local;
+    return text.charAt(0).toUpperCase() + text.slice(1) + ".";
+  }
+
+  _renderSummary() {
+    const t = this._t;
+    const all = this._automations;
+    const count = (fn) => all.filter(fn).length;
+    const works = count((a) => a.verdict === "works");
+    const notify = count((a) => a.only_notifications);
+    const unknown = count((a) => a.verdict === "unknown");
+    const loss = count((a) => ["fails", "degraded"].includes(a.verdict) && !a.only_notifications);
+    const lines =
+      works === all.length
+        ? [t.summaryAllGood]
+        : [
+            this._fmt(t.summaryWorks, { works, total: all.length }),
+            notify ? this._fmt(t.summaryNotify, { n: notify }) : "",
+            loss ? this._fmt(t.summaryLoss, { n: loss }) : "",
+            unknown ? this._fmt(t.summaryUnknown, { n: unknown }) : "",
+          ];
+    return `<p class="summary">${lines.filter(Boolean).map(esc).join(" ")}</p>`;
+  }
+
+  _whatSeen() {
+    try {
+      return localStorage.getItem("unclouded-what-seen") === "1";
+    } catch (err) {
+      return false;
+    }
+  }
+
+  _renderWhat() {
+    const t = this._t;
+    return `
+      <details class="card what" id="what"${this._whatSeen() ? "" : " open"}>
+        <summary><h2>${esc(t.whatTitle)}</h2></summary>
+        <p>${esc(t.whatText1)}</p>
+        <p>${esc(t.whatText2)}</p>
+        <p class="muted">${esc(t.whatText3)}</p>
+        <div class="actions"><button id="what-seen">${esc(t.hide)}</button></div>
+      </details>`;
+  }
+
+  _renderAdvice() {
+    const t = this._t;
+    if (!this._advice.length) return "";
+    const items = this._advice.map((a, i) => {
+      const values = { entries: this._titles(a.entries), helpers: this._titles(a.helpers) };
+      let how = t[`advice_${a.key}_how`];
+      if (a.key === "presence" && a.helpers.length) how = t.advice_presence_how_helpers;
+      const names = a.automations
+        .map((id) => this._automations.find((x) => x.entity_id === id))
+        .filter(Boolean)
+        .sort((x, y) => x.name.localeCompare(y.name))
+        .map((x) => `<li>${esc(x.name)}</li>`)
+        .join("");
+      return `
+        <li class="advice">
+          <div class="advice-head"><span class="num">${i + 1}</span><h3>${esc(t[`advice_${a.key}_title`])}</h3></div>
+          <p>${esc(this._fmt(t[`advice_${a.key}_why`], values))}</p>
+          <p class="how"><strong>${esc(t.howLabel)}</strong> ${esc(this._fmt(how, values))}</p>
+          <details class="affected">
+            <summary>${esc(
+              a.automations.length === 1 ? t.affects1 : this._fmt(t.affects, { n: a.automations.length })
+            )}</summary>
+            <ul class="names">${names}</ul>
+          </details>
+        </li>`;
+    });
+    return `
+      <section class="card">
+        <h2>${esc(t.adviceTitle)}</h2>
+        <p class="muted">${esc(t.adviceHint)}</p>
+        <ol class="advices">${items.join("")}</ol>
+      </section>`;
+  }
+
   _renderDependency(dep) {
     const t = this._t;
     const entry = dep.entry_id && this._entry(dep.entry_id);
@@ -249,12 +477,15 @@ class UncloudedPanel extends HTMLElement {
     const star = `<button class="star${automation.important ? " on" : ""}" data-important="${esc(automation.entity_id)}"
       title="${esc(automation.important ? t.unmarkImportant : t.markImportant)}">${automation.important ? "★" : "☆"}</button>`;
     const row = `${star}<span class="name">${esc(automation.name)}</span>${flag}${link}`;
-    if (!problems.length) return `<li class="automation"><div class="row">${row}</div></li>`;
+    const say = `<div class="say">${esc(this._say(automation))}</div>`;
+    if (!problems.length) return `<li class="automation"><div class="row">${row}</div>${say}</li>`;
     const open = this._open.has(automation.entity_id) ? " open" : "";
     return `
       <li class="automation">
-        <details data-id="${esc(automation.entity_id)}"${open}>
-          <summary class="row">${row}</summary>
+        <div class="row">${row}</div>
+        ${say}
+        <details class="tech" data-id="${esc(automation.entity_id)}"${open}>
+          <summary>${esc(t.details)}</summary>
           <ul class="deps">${problems.map((d) => this._renderDependency(d)).join("")}</ul>
         </details>
       </li>`;
@@ -409,7 +640,13 @@ class UncloudedPanel extends HTMLElement {
     let body = "";
     if (this._error) body = `<p class="error">${esc(t.error)}: ${esc(this._error)}</p>`;
     else if (this._automations)
-      body = this._renderDecide() + this._renderVerdicts() + this._renderEntries();
+      body =
+        `<section class="card">${this._renderSummary()}</section>` +
+        this._renderWhat() +
+        this._renderDecide() +
+        this._renderAdvice() +
+        this._renderVerdicts() +
+        this._renderEntries();
     else body = `<p class="muted">…</p>`;
     this.shadowRoot.innerHTML = `
       <style>${STYLE}</style>
@@ -442,6 +679,14 @@ class UncloudedPanel extends HTMLElement {
         $(el.getAttribute("href"))?.scrollIntoView({ behavior: "smooth" });
       })
     );
+    $("#what-seen")?.addEventListener("click", () => {
+      try {
+        localStorage.setItem("unclouded-what-seen", "1");
+      } catch (err) {
+        // Without storage the explanation simply opens again next time.
+      }
+      $("#what").open = false;
+    });
     this.shadowRoot.querySelectorAll("button[data-important]").forEach((el) =>
       el.addEventListener("click", (e) => {
         // The star sits in the summary; keep it from opening the details.
@@ -494,12 +739,12 @@ const STYLE = `
   li.automation { padding: 8px 0; border-top: 1px solid var(--divider-color); }
   .row { display: flex; align-items: baseline; gap: 6px 8px; flex-wrap: wrap; }
   .row .name { flex: 1 1 200px; }
-  div.row { padding-left: 18px; }
+  div.row { padding-left: 0; }
   a.open { font-size: 13px; white-space: nowrap; margin-left: auto; }
   summary { cursor: pointer; list-style: none; }
   summary::-webkit-details-marker { display: none; }
-  li.automation summary::before { content: "▸"; width: 10px; color: var(--secondary-text-color); }
-  li.automation details[open] summary::before { content: "▾"; }
+  details.tech > summary::before { content: "▸ "; }
+  details.tech[open] > summary::before { content: "▾ "; }
   .tile.empty { opacity: .55; }
   button.star { font: inherit; font-size: 18px; line-height: 1; border: 0; background: transparent;
     padding: 0 2px; cursor: pointer; color: var(--secondary-text-color); align-self: center; }
@@ -509,6 +754,30 @@ const STYLE = `
   select.choice.chosen { border-color: var(--primary-color); }
   .mine { font-size: 12px; color: var(--primary-color); margin-top: 2px; }
   .card.decide { border-color: var(--warning-color, #ff9800); }
+  .summary { font-size: 17px; line-height: 1.5; margin: 0; }
+  .what p { line-height: 1.5; margin: 8px 0; }
+  .what > summary h2::before, .card > summary h2::before { content: "▸"; color: var(--secondary-text-color); }
+  .what[open] > summary h2::before { content: "▾"; }
+  .actions { display: flex; justify-content: flex-end; }
+  .actions button { font: inherit; padding: 6px 14px; border-radius: 6px; cursor: pointer;
+    border: 1px solid var(--divider-color); background: transparent; color: var(--primary-color); }
+  ol.advices { list-style: none; padding: 0; margin: 8px 0 0; counter-reset: none; }
+  li.advice { padding: 12px 0; border-top: 1px solid var(--divider-color); }
+  li.advice p { margin: 6px 0 6px 34px; line-height: 1.5; }
+  .advice-head { display: flex; align-items: center; gap: 10px; }
+  .advice-head h3 { font-size: 16px; font-weight: 500; margin: 0; }
+  .num { flex: none; width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center;
+    justify-content: center; font-size: 13px; font-weight: 500; color: var(--text-primary-color, #fff);
+    background: var(--primary-color); }
+  .how { color: var(--primary-text-color); }
+  details.affected { margin-left: 34px; font-size: 14px; }
+  details.affected summary { color: var(--primary-color); }
+  ul.names { list-style: disc; padding-left: 20px; margin: 4px 0 0; }
+  ul.names li { padding: 1px 0; }
+  .say { margin: 2px 0 0 26px; font-size: 14px; color: var(--secondary-text-color); line-height: 1.4; }
+  details.tech { margin: 4px 0 0 26px; font-size: 13px; }
+  details.tech > summary { color: var(--secondary-text-color); }
+  details.tech ul.deps { margin-left: 0; }
   #entries > summary h2::before { content: "▸"; color: var(--secondary-text-color); }
   #entries[open] > summary h2::before { content: "▾"; }
   ul.deps { margin: 6px 0 0 18px; font-size: 14px; }
