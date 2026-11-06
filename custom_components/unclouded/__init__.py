@@ -17,6 +17,7 @@ from homeassistant.helpers.start import async_at_started
 from . import websocket
 from .changes import Baseline
 from .const import DOMAIN
+from .push import async_record_local_push
 from .repairs import async_remove_issues, async_update_issues
 
 PANEL_URL = "unclouded"
@@ -25,6 +26,8 @@ PANEL_JS = Path(__file__).parent / "frontend" / "unclouded-panel.js"
 _STATIC_REGISTERED = f"{DOMAIN}_static_registered"
 # Integrations can change how they connect without a reload being noticed.
 REFRESH_INTERVAL = timedelta(hours=1)
+# Phones only keep a local push channel open while they are at home.
+PUSH_INTERVAL = timedelta(minutes=10)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -53,7 +56,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     )
 
     async def refresh(_: Any = None) -> None:
+        async_record_local_push(hass)
         await async_update_issues(hass)
+
+    async def check_push(_: Any = None) -> None:
+        if async_record_local_push(hass):
+            await async_update_issues(hass)
 
     async def at_started(_: HomeAssistant) -> None:
         await refresh()
@@ -62,6 +70,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     entry.async_on_unload(async_at_started(hass, at_started))
     entry.async_on_unload(hass.bus.async_listen("automation_reloaded", refresh))
     entry.async_on_unload(async_track_time_interval(hass, refresh, REFRESH_INTERVAL))
+    entry.async_on_unload(async_track_time_interval(hass, check_push, PUSH_INTERVAL))
     return True
 
 

@@ -25,3 +25,5 @@ and the project uses [Semantic Versioning](https://semver.org/).
 - The voice assistant: every Assist pipeline with its wake word, speech-to-text, conversation
   agent and text-to-speech, whether each works without the internet, and the voice
   satellites using it.
+- Local push on iPhones and iPads: their config entry does not say whether it is on, so
+  Unclouded looks for the push channel the app keeps open at home and remembers the device.

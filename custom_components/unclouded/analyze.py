@@ -152,6 +152,7 @@ class Analyzer:
         iot_classes: dict[str, str | None],
         helpers: set[str],
         overrides: Mapping[str, str] | None = None,
+        local_push: set[str] | frozenset[str] = frozenset(),
     ) -> None:
         self.hass = hass
         self.entries = {e.entry_id: e for e in entries}
@@ -159,6 +160,8 @@ class Analyzer:
         # Integrations computing entities from others (template, derivative, …).
         self.helpers = helpers
         self.overrides = overrides or {}
+        # Phones seen with a local push channel (see push.py).
+        self.local_push = local_push
         self._platform_entities: dict[str, dict[str, Any]] = {}
         self.ent_reg = er.async_get(hass)
         self.dev_reg = dr.async_get(hass)
@@ -331,7 +334,10 @@ class Analyzer:
         for entry in self.hass.config_entries.async_entries("mobile_app"):
             if name == f"mobile_app_{slugify(entry.data.get('device_name', ''))}":
                 app_data = entry.data.get("app_data", {})
-                if app_data.get("push_websocket_channel"):
+                if (
+                    app_data.get("push_websocket_channel")
+                    or entry.entry_id in self.local_push
+                ):
                     # Local push while the phone is in the home network.
                     return Reach.PARTIAL, "mobile_app_local_push", entry.entry_id
                 if "push_url" in app_data:
@@ -496,7 +502,9 @@ async def async_build_analyzer(hass: HomeAssistant) -> Analyzer:
         for d, i in integrations.items()
         if getattr(i, "integration_type", None) == "helper"
     }
-    return Analyzer(hass, entries, iot_classes, helpers, settings.overrides)
+    return Analyzer(
+        hass, entries, iot_classes, helpers, settings.overrides, settings.local_push
+    )
 
 
 async def async_analyze_automations(hass: HomeAssistant) -> list[AutomationReport]:
