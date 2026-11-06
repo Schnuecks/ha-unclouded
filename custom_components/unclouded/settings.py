@@ -15,6 +15,7 @@ from .const import DOMAIN
 
 OVERRIDES = "overrides"
 IMPORTANT = "important"
+LOCAL_PUSH = "local_push"
 
 
 def entry_key(entry_id: str) -> str:
@@ -35,6 +36,9 @@ class Settings:
     overrides: dict[str, str] = field(default_factory=dict)
     # Entity IDs of automations the user wants to be told about.
     important: set[str] = field(default_factory=set)
+    # Config entries of phones seen with a local push channel, e.g. iPhones, whose
+    # entry does not say whether local push is on.
+    local_push: set[str] = field(default_factory=set)
 
 
 def async_get_settings(hass: HomeAssistant) -> Settings:
@@ -46,6 +50,7 @@ def async_get_settings(hass: HomeAssistant) -> Settings:
     return Settings(
         overrides=dict(options.get(OVERRIDES, {})),
         important=set(options.get(IMPORTANT, [])),
+        local_push=set(options.get(LOCAL_PUSH, [])),
     )
 
 
@@ -58,6 +63,7 @@ def async_save_settings(hass: HomeAssistant, settings: Settings) -> None:
             **entry.options,
             OVERRIDES: dict(sorted(settings.overrides.items())),
             IMPORTANT: sorted(settings.important),
+            LOCAL_PUSH: sorted(settings.local_push),
         },
     )
 
@@ -68,3 +74,4 @@ def prune(settings: Settings, keys: Iterable[str]) -> None:
     for key in list(settings.overrides):
         if key.startswith("entry:") and key not in known:
             del settings.overrides[key]
+    settings.local_push &= {k.partition(":")[2] for k in known}

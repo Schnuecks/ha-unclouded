@@ -13,6 +13,7 @@ from .advice import build_advice
 from .analyze import async_analyze_automations
 from .classify import async_can_override, async_classify_entries
 from .const import DOMAIN
+from .push import async_record_local_push
 from .repairs import async_update_issues
 from .settings import (
     Settings,
@@ -59,6 +60,7 @@ async def ws_automations(
     hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
 ) -> None:
     """Return the verdict for every automation and what the user can do."""
+    async_record_local_push(hass)
     reports = await async_analyze_automations(hass)
     entries = await async_classify_entries(hass, async_get_settings(hass).overrides)
     connection.send_result(

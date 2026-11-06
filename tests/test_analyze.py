@@ -18,6 +18,8 @@ from custom_components.unclouded.analyze import (
 )
 from custom_components.unclouded.classify import Reach
 from custom_components.unclouded.const import DOMAIN
+from custom_components.unclouded.push import async_record_local_push
+from custom_components.unclouded.settings import async_get_settings
 
 
 @pytest.fixture
@@ -568,3 +570,31 @@ async def test_stored_scene_follows_its_entities(hass: HomeAssistant, setup) -> 
     )
     (scene,) = [d for d in report.dependencies if d.ref == "scene.evening"]
     assert scene.reach is Reach.CLOUD
+
+
+async def test_open_push_channel_is_remembered(hass: HomeAssistant, setup) -> None:
+    """An iPhone with local push keeps a channel open; that is remembered."""
+    unclouded = MockConfigEntry(domain=DOMAIN)
+    unclouded.add_to_hass(hass)
+    phone = setup["phone"]
+    hass.config_entries.async_update_entry(
+        phone, data={**phone.data, "webhook_id": "hook"}
+    )
+    hass.data["mobile_app"] = {"push_channel": {"hook": object()}}
+
+    assert async_record_local_push(hass)
+    # Nothing new the second time.
+    assert not async_record_local_push(hass)
+    # The phone has left home: the channel is closed, but it stays remembered.
+    hass.data["mobile_app"]["push_channel"] = {}
+
+    report = await _analyze(
+        hass,
+        {
+            "triggers": [LOCAL_TRIGGER],
+            "actions": [LOCAL_ACTION, {"action": "notify.mobile_app_phone"}],
+        },
+    )
+    (push,) = [d for d in report.dependencies if d.kind == "action"]
+    assert (push.reach, push.reason) == (Reach.PARTIAL, "mobile_app_local_push")
+    assert async_get_settings(hass).local_push == {phone.entry_id}
