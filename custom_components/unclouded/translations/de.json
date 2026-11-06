@@ -13,15 +13,15 @@
   "issues": {
     "important_fails": {
       "title": "{name} fällt ohne Internet aus",
-      "description": "Die Automation **{name}**, die du als wichtig markiert hast, bewirkt ohne Internet nichts. In Unclouded in der Seitenleiste siehst du, welche Teile es brauchen."
+      "description": "Die Automation {automation}, die du als wichtig markiert hast, bewirkt ohne Internet nichts. In [Unclouded]({panel}) siehst du, welche Teile es brauchen."
     },
     "important_degraded": {
       "title": "{name} läuft ohne Internet nur teilweise",
-      "description": "Die Automation **{name}**, die du als wichtig markiert hast, läuft ohne Internet, aber manche ihrer Teile kommen nicht durch. In Unclouded in der Seitenleiste siehst du, welche."
+      "description": "Die Automation {automation}, die du als wichtig markiert hast, läuft ohne Internet, aber manche ihrer Teile kommen nicht durch. In [Unclouded]({panel}) siehst du, welche."
     },
     "important_notifications": {
       "title": "Benachrichtigungen von {name} brauchen Internet",
-      "description": "Die Automation **{name}**, die du als wichtig markiert hast, verschickt Benachrichtigungen, die ohne Internet nicht ankommen. Alles andere läuft weiter."
+      "description": "Die Automation {automation}, die du als wichtig markiert hast, verschickt Benachrichtigungen, die ohne Internet nicht ankommen. Alles andere läuft weiter. Details in [Unclouded]({panel})."
     },
     "now_cloud": {
       "title": "{title} braucht jetzt Internet",

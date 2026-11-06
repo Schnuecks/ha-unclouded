@@ -422,6 +422,11 @@ class UncloudedPanel extends HTMLElement {
     return this._list([...new Set(entryIds.map((id) => this._entry(id)?.title).filter(Boolean))]);
   }
 
+  _automationLink(automation) {
+    if (!automation.config_id) return esc(automation.name);
+    return `<a href="/config/automation/edit/${encodeURIComponent(automation.config_id)}">${esc(automation.name)}</a>`;
+  }
+
   _name(entityId) {
     return this._hass.states[entityId]?.attributes.friendly_name || entityId;
   }
@@ -553,7 +558,7 @@ class UncloudedPanel extends HTMLElement {
         .map((id) => this._automations.find((x) => x.entity_id === id))
         .filter(Boolean)
         .sort((x, y) => x.name.localeCompare(y.name))
-        .map((x) => `<li>${esc(x.name)}</li>`)
+        .map((x) => `<li>${this._automationLink(x)}</li>`)
         .join("");
       return `
         <li class="advice">
