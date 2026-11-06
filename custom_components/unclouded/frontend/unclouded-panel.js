@@ -78,7 +78,24 @@ const STRINGS = {
     advice_local_tts_title: "Make announcements locally",
     advice_local_tts_why: "Spoken announcements are created by a cloud service ({entries}).",
     advice_local_tts_how:
-      "Set up local text-to-speech, for example the Piper add-on, and use it in these automations.",
+      "Two ways that also work on small hardware: Home Assistant keeps every announcement it has created once (folder tts) and plays it again from there, even without the internet – so use a fixed sentence for important announcements, without changing values in it. Or use local text-to-speech such as Piper only as a fallback while the internet is down; for short sentences it is fast enough even on small machines.",
+    // Concrete steps with links
+    stepsLabel: "Go to:",
+    link_integration: "{name} settings",
+    link_people: "People",
+    link_wyoming: "Add Wyoming",
+    link_piper: "Piper add-on",
+    link_whisper: "Whisper add-on",
+    link_assistants: "Voice assistants",
+    pushPending: "Unclouded notices it by itself once the phone is on your Wi-Fi with local push on; this can take up to 10 minutes.",
+    alt_sonoff: "Set the mode to “auto” or “local” in the integration's options.",
+    alt_xiaomi_miot: "Choose the connection mode “auto” or “local” for this entry.",
+    alt_tuya: "Tuya Local or LocalTuya (HACS) control many Tuya devices directly in your Wi-Fi.",
+    alt_switchbot_cloud: "The SwitchBot Bluetooth integration controls many SwitchBot devices locally.",
+    alt_tado: "tado° devices can also be added locally: older ones through HomeKit Device, tado° X through Matter.",
+    alt_meross_cloud: "Meross LAN (HACS) controls Meross devices directly in your network.",
+    alt_weather: "Weather data comes from the internet by nature. A local weather station, for example through Ecowitt, keeps working.",
+    alt_none: "No local way is known for {name}. When you replace these devices, prefer ones with Matter, Zigbee or a local API.",
     // Sentences per automation
     say_notify_lost: "notification to {who} does not arrive",
     say_notify_home: "notification to {who} only arrives at home",
@@ -119,7 +136,7 @@ const STRINGS = {
     stage_stt: "Speech to text",
     stage_conversation: "Conversation agent",
     stage_tts: "Text to speech",
-    voiceAdvice: "Local alternatives: Whisper (speech to text) and Piper (text to speech) through the Wyoming integration, and the built-in Home Assistant agent – or turn on “Prefer handling commands locally” so device commands keep working.",
+    voiceAdvice: "A fully local voice assistant needs a lot of computing power, above all for speech recognition (Whisper); on small machines it is often too slow to use. Realistic: commands Home Assistant understands itself work locally with “Prefer handling commands locally”, and announcements with fixed sentences come from the cache. Local alternatives, if your hardware is up to it: Whisper and Piper through the Wyoming integration.",
     integrations: "Integrations",
     integrationsHint: "How each set-up integration connects, as found out by Unclouded. Automations are judged on this basis.",
     reach_cloud: "Cloud",
@@ -229,7 +246,24 @@ const STRINGS = {
     advice_local_tts_title: "Durchsagen lokal erzeugen",
     advice_local_tts_why: "Gesprochene Durchsagen erzeugt ein Cloud-Dienst ({entries}).",
     advice_local_tts_how:
-      "Richte eine lokale Sprachausgabe ein, zum Beispiel das Add-on Piper, und nutze sie in diesen Automationen.",
+      "Zwei Wege, die auch auf kleiner Hardware gehen: Home Assistant hebt jede einmal erzeugte Durchsage auf (Ordner tts) und spielt sie von dort erneut ab, auch ohne Internet – nimm für wichtige Durchsagen also einen festen Satz ohne wechselnde Werte. Oder nutze eine lokale Sprachausgabe wie Piper nur als Ersatz, solange das Internet weg ist; für kurze Sätze ist sie auch auf kleinen Rechnern schnell genug.",
+    // Konkrete Schritte mit Links
+    stepsLabel: "Direkt zu:",
+    link_integration: "{name} einstellen",
+    link_people: "Personen",
+    link_wyoming: "Wyoming hinzufügen",
+    link_piper: "Add-on Piper",
+    link_whisper: "Add-on Whisper",
+    link_assistants: "Sprachassistenten",
+    pushPending: "Unclouded erkennt es von selbst, sobald das Handy mit lokalem Push in deinem WLAN ist; das kann bis zu 10 Minuten dauern.",
+    alt_sonoff: "In den Optionen der Integration den Modus „auto“ oder „local“ wählen.",
+    alt_xiaomi_miot: "Für diesen Eintrag den Verbindungsmodus „auto“ oder „local“ wählen.",
+    alt_tuya: "Tuya Local oder LocalTuya (HACS) steuern viele Tuya-Geräte direkt im WLAN.",
+    alt_switchbot_cloud: "Die Integration SwitchBot Bluetooth steuert viele SwitchBot-Geräte lokal.",
+    alt_tado: "tado°-Geräte lassen sich auch lokal einbinden: ältere über HomeKit Device, tado° X über Matter.",
+    alt_meross_cloud: "Meross LAN (HACS) steuert Meross-Geräte direkt im Netz.",
+    alt_weather: "Wetterdaten kommen naturgemäß aus dem Internet. Eine eigene Wetterstation, zum Beispiel über Ecowitt, läuft weiter.",
+    alt_none: "Für {name} ist kein lokaler Weg bekannt. Beim Austausch Geräte mit Matter, Zigbee oder lokaler Schnittstelle bevorzugen.",
     say_notify_lost: "Benachrichtigung an {who} kommt nicht an",
     say_notify_home: "Benachrichtigung an {who} kommt nur zu Hause an",
     say_tts: "Durchsage über {who} entfällt",
@@ -269,7 +303,7 @@ const STRINGS = {
     stage_stt: "Sprache zu Text",
     stage_conversation: "Gesprächsagent",
     stage_tts: "Text zu Sprache",
-    voiceAdvice: "Lokale Alternativen: Whisper (Sprache zu Text) und Piper (Text zu Sprache) über die Wyoming-Integration sowie der eingebaute Home-Assistant-Agent – oder „Befehle bevorzugt lokal verarbeiten“ einschalten, damit Gerätebefehle weiter gehen.",
+    voiceAdvice: "Ein ganz lokaler Sprachassistent braucht viel Rechenleistung, vor allem die Spracherkennung (Whisper); auf kleinen Rechnern ist sie oft zu langsam zum Benutzen. Realistisch: Befehle, die Home Assistant selbst versteht, laufen mit „Befehle bevorzugt lokal verarbeiten“ lokal, und Durchsagen mit festen Sätzen kommen aus dem Zwischenspeicher. Lokale Alternativen, wenn die Hardware reicht: Whisper und Piper über die Wyoming-Integration.",
     integrations: "Integrationen",
     integrationsHint: "Wie sich jede eingerichtete Integration verbindet, so wie Unclouded es ermittelt hat. Darauf beruht die Bewertung der Automationen.",
     reach_cloud: "Cloud",
@@ -317,6 +351,22 @@ const kindOf = (a) =>
       : a.only_notifications
         ? "notify"
         : "loss";
+// Known local ways for integrations that go through a cloud, by domain.
+const ALTERNATIVES = {
+  sonoff: "alt_sonoff",
+  xiaomi_miot: "alt_xiaomi_miot",
+  tuya: "alt_tuya",
+  switchbot_cloud: "alt_switchbot_cloud",
+  tado: "alt_tado",
+  meross_cloud: "alt_meross_cloud",
+  met: "alt_weather",
+  openweathermap: "alt_weather",
+  accuweather: "alt_weather",
+  pirateweather: "alt_weather",
+  dwd_weather_warnings: "alt_weather",
+  meteo_france: "alt_weather",
+};
+
 const REACHES = ["cloud", "partial", "unknown", "local", "internal"];
 const LOCAL = ["local", "internal"];
 
@@ -517,6 +567,61 @@ class UncloudedPanel extends HTMLElement {
   }
 
   // Concrete steps per phone instead of the general advice.
+  _supervisor() {
+    return this._hass.config?.components?.includes("hassio");
+  }
+
+  _links(links) {
+    if (!links.length) return "";
+    return `<p class="links"><strong>${esc(this._t.stepsLabel)}</strong> ${links
+      .map(([href, text]) => `<a class="chip" href="${esc(href)}">${esc(text)} ›</a>`)
+      .join(" ")}</p>`;
+  }
+
+  _voiceLinks() {
+    const t = this._t;
+    const links = [["/config/integrations/dashboard/add?domain=wyoming", t.link_wyoming]];
+    if (this._supervisor())
+      links.push(["/hassio/addon/core_piper/info", t.link_piper], ["/hassio/addon/core_whisper/info", t.link_whisper]);
+    links.push(["/config/voice-assistants/assistants", t.link_assistants]);
+    return links;
+  }
+
+  _integrationLink(entry) {
+    return [
+      `/config/integrations/integration/${encodeURIComponent(entry.domain)}`,
+      this._fmt(this._t.link_integration, { name: entry.integration_name || entry.domain }),
+    ];
+  }
+
+  _renderSteps(advice) {
+    const t = this._t;
+    const entries = advice.entries.map((id) => this._entry(id)).filter(Boolean);
+    if (advice.key === "local_push") return `<p class="muted">${esc(t.pushPending)}</p>`;
+    if (advice.key === "presence") {
+      // Matches bring their own links.
+      if (advice.matches?.length) return "";
+      const helpers = advice.helpers.map((id) => this._entry(id)).filter(Boolean);
+      return this._links([["/config/person", t.link_people], ...helpers.map((e) => this._integrationLink(e))]);
+    }
+    if (advice.key === "local_tts") return this._links(this._voiceLinks());
+    if (advice.key !== "cloud_devices") return "";
+    const byDomain = new Map();
+    for (const e of entries) byDomain.set(e.domain, [...(byDomain.get(e.domain) || []), e]);
+    const rows = [...byDomain.values()]
+      .sort((a, b) => (a[0].integration_name || "").localeCompare(b[0].integration_name || ""))
+      .map((group) => {
+        const e = group[0];
+        const name = e.integration_name || e.domain;
+        const alt = ALTERNATIVES[e.domain];
+        const text = alt ? t[alt] : this._fmt(t.alt_none, { name });
+        const [href] = this._integrationLink(e);
+        return `<li><a href="${esc(href)}">${esc(name)}</a>: ${esc(text)}</li>`;
+      })
+      .join("");
+    return `<ul class="steps alternatives">${rows}</ul>`;
+  }
+
   _renderMatches(matches) {
     const t = this._t;
     const steps = matches.map((m) => {
@@ -540,6 +645,13 @@ class UncloudedPanel extends HTMLElement {
         <p><strong>${esc(t.howLabel)}</strong> ${esc(t.matchIntro)}</p>
         <ul class="steps">${steps.join("")}</ul>
         ${apple ? `<p class="muted">${esc(t.matchApple)}</p>` : ""}
+        ${this._links([
+          ["/config/person", t.link_people],
+          ...[...new Set(matches.map((m) => m.entry_id))]
+            .map((id) => this._entry(id))
+            .filter(Boolean)
+            .map((e) => this._integrationLink(e)),
+        ])}
       </div>`;
   }
 
@@ -569,6 +681,7 @@ class UncloudedPanel extends HTMLElement {
               ? this._renderMatches(a.matches)
               : `<p class="how"><strong>${esc(t.howLabel)}</strong> ${esc(this._fmt(how, values))}</p>`
           }
+          ${this._renderSteps(a)}
           <details class="affected">
             <summary>${esc(
               a.automations.length === 1 ? t.affects1 : this._fmt(t.affects, { n: a.automations.length })
@@ -784,7 +897,7 @@ class UncloudedPanel extends HTMLElement {
         <summary><h2>${esc(t.voice)} · ${this._voice.length}</h2></summary>
         <p class="muted">${esc(t.voiceHint)}</p>
         ${pipelines}
-        ${anyCloud ? `<p>${esc(t.voiceAdvice)}</p>` : ""}
+        ${anyCloud ? `<p>${esc(t.voiceAdvice)}</p>${this._links(this._voiceLinks())}` : ""}
       </details>`;
   }
 
@@ -982,6 +1095,9 @@ const STYLE = `
     border: 1px solid var(--divider-color); color: var(--secondary-text-color); white-space: nowrap; }
   .badge.spaced { margin-left: 4px; }
   .pipeline { margin: 12px 0; }
+  .links { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 14px; }
+  a.chip { border: 1px solid var(--divider-color); border-radius: 14px; padding: 2px 10px; text-decoration: none; }
+  ul.alternatives li { margin: 4px 0; }
   .pipeline h3 { font-size: 15px; margin: 0 0 4px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
   .badge.cloud { color: var(--uc-fails); border-color: var(--uc-fails); }
   .badge.partial { color: var(--uc-degraded); border-color: var(--uc-degraded); }

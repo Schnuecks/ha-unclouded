@@ -29,3 +29,7 @@ and the project uses [Semantic Versioning](https://semver.org/).
   Unclouded looks for the push channel the app keeps open at home and remembers the device.
 - Automations named in suggestions and repair issues link to their editor; repair issues
   link to the panel.
+- Suggestions come with direct links to the right settings page and, for integrations that
+  go through a cloud, a known local way where there is one.
+- Advice on announcements and the voice assistant takes small hardware into account: fixed
+  sentences are played from the TTS cache without the internet, local TTS as a fallback.
