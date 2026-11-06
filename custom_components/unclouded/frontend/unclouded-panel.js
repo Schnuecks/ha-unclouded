@@ -70,6 +70,11 @@ const STRINGS = {
       "The {helpers} integration already sees which devices are on your Wi-Fi. Find the phone there and add it to the person as another device (Settings → People). Home Assistant then knows without the internet whether someone is at home.",
     advice_presence_how:
       "Set up an integration for your router or Wi-Fi that sees which devices are connected, and add the phone found there to the person (Settings → People).",
+    advice_substitutes_title: "Check values that are replaced without the internet",
+    advice_substitutes_why:
+      "These automations read values from {entries} in a template with a fallback, for example float(10). Without the internet they keep running, but with the fallback instead of the real value – often without anyone noticing.",
+    advice_substitutes_how:
+      "Use a sensor in your home where there is one (for example your own outdoor sensor instead of a weather service). Otherwise check in the template with has_value() whether the value is there, and decide what should happen without it.",
     advice_cloud_devices_title: "Devices behind a manufacturer's cloud",
     advice_cloud_devices_why:
       "With {entries}, everything goes through the manufacturer's servers. Without internet, or once the manufacturer shuts the service down, nothing responds.",
@@ -105,6 +110,7 @@ const STRINGS = {
     say_trigger_partial: "{what} ({who}) only arrives over the internet while away, so the automation may not be triggered",
     say_condition: "condition on {what} ({who}) cannot be checked",
     say_action: "{what} ({who}) is not switched",
+    say_substitute: "without the internet {what} ({who}) is replaced by a fixed value, so the automation decides on that value",
     say_unknown: "unclear how {what} connects",
     say_all_local: "uses only devices in your home",
     details: "Technical details",
@@ -148,6 +154,7 @@ const STRINGS = {
     error: "Error",
     reasons: {
       iot_class_local: "talks to devices in your network",
+      template_substitute: "read in a template with a fallback value; without the internet that value is used",
       built_in_agent: "built-in agent of Home Assistant",
       agent_local_first: "cloud agent, but commands Home Assistant understands itself are handled locally",
       iot_class_cloud: "talks to a cloud service",
@@ -238,6 +245,11 @@ const STRINGS = {
       "Die Integration {helpers} sieht schon, welche Geräte in deinem WLAN sind. Such dort das Handy heraus und füge es der Person als weiteres Gerät hinzu (Einstellungen → Personen). Dann weiß Home Assistant auch ohne Internet, ob jemand zu Hause ist.",
     advice_presence_how:
       "Richte eine Integration für deinen Router oder dein WLAN ein, die sieht, welche Geräte verbunden sind, und füge das Handy von dort der Person hinzu (Einstellungen → Personen).",
+    advice_substitutes_title: "Werte prüfen, die ohne Internet ersetzt werden",
+    advice_substitutes_why:
+      "Diese Automationen lesen Werte von {entries} in einer Vorlage mit Ersatzwert, zum Beispiel float(10). Ohne Internet laufen sie weiter, aber mit dem Ersatzwert statt dem echten – oft, ohne dass es jemand merkt.",
+    advice_substitutes_how:
+      "Nimm einen Sensor bei dir zu Hause, wo es einen gibt (zum Beispiel einen eigenen Außensensor statt eines Wetterdienstes). Sonst prüfe in der Vorlage mit has_value(), ob der Wert da ist, und lege fest, was ohne ihn passieren soll.",
     advice_cloud_devices_title: "Geräte hinter einer Hersteller-Cloud",
     advice_cloud_devices_why:
       "Bei {entries} läuft alles über Server des Herstellers. Ohne Internet, oder wenn der Hersteller den Dienst einstellt, reagiert nichts.",
@@ -272,6 +284,7 @@ const STRINGS = {
     say_trigger_partial: "{what} ({who}) kommt unterwegs nur über das Internet, die Automation löst dann womöglich nicht aus",
     say_condition: "Bedingung zu {what} ({who}) lässt sich nicht prüfen",
     say_action: "{what} ({who}) wird nicht geschaltet",
+    say_substitute: "ohne Internet wird {what} ({who}) durch einen festen Wert ersetzt, die Automation entscheidet dann danach",
     say_unknown: "unklar, wie sich {what} verbindet",
     say_all_local: "nutzt nur Geräte bei dir zu Hause",
     details: "Technische Details",
@@ -315,6 +328,7 @@ const STRINGS = {
     error: "Fehler",
     reasons: {
       iot_class_local: "spricht mit Geräten im eigenen Netz",
+      template_substitute: "in einer Vorlage mit Ersatzwert gelesen; ohne Internet gilt dieser Wert",
       built_in_agent: "eingebauter Agent von Home Assistant",
       agent_local_first: "Cloud-Agent, aber Befehle, die Home Assistant selbst versteht, laufen lokal",
       iot_class_cloud: "spricht mit einem Cloud-Dienst",
@@ -438,7 +452,7 @@ class UncloudedPanel extends HTMLElement {
       const d = this._hass.devices?.[dep.ref];
       return d ? d.name_by_user || d.name || dep.ref : dep.ref;
     }
-    if (dep.kind === "entity") {
+    if (dep.kind === "entity" || dep.kind === "template") {
       const name = this._hass.states[dep.ref]?.attributes.friendly_name;
       return name ? `${name} (${dep.ref})` : dep.ref;
     }
@@ -486,7 +500,8 @@ class UncloudedPanel extends HTMLElement {
     const t = this._t;
     const phrases = this._problems(automation).map((d) => {
       const who = this._entry(d.entry_id)?.title || d.ref;
-      const what = d.kind === "entity" ? this._name(d.ref) : this._refLabel(d);
+      const what = ["entity", "template"].includes(d.kind) ? this._name(d.ref) : this._refLabel(d);
+      if (d.substitute) return this._fmt(t.say_substitute, { what, who });
       if (d.part === "action" && d.notification && d.ref.startsWith("notify."))
         return this._fmt(d.reach === "partial" ? t.say_notify_home : t.say_notify_lost, { who });
       if (d.part === "action" && d.ref.startsWith("tts.")) return this._fmt(t.say_tts, { who });
