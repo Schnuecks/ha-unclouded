@@ -37,3 +37,5 @@ and the project uses [Semantic Versioning](https://semver.org/).
   `float(10)`, is reported separately: the automation keeps running, but on the fallback.
 - A cloud value in an "or" condition no longer counts as a failure when another branch of
   that condition works locally.
+- Suggestions name integrations instead of entry titles such as station IDs, and cloud
+  services like weather are no longer called devices.

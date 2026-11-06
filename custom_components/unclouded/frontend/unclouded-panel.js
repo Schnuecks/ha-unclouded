@@ -75,11 +75,12 @@ const STRINGS = {
       "These automations read values from {entries} in a template with a fallback, for example float(10). Without the internet they keep running, but with the fallback instead of the real value – often without anyone noticing.",
     advice_substitutes_how:
       "Use a sensor in your home where there is one (for example your own outdoor sensor instead of a weather service). Otherwise check in the template with has_value() whether the value is there, and decide what should happen without it.",
-    advice_cloud_devices_title: "Devices behind a manufacturer's cloud",
+    advice_cloud_devices_title:
+      "Devices and services in the cloud",
     advice_cloud_devices_why:
-      "With {entries}, everything goes through the manufacturer's servers. Without internet, or once the manufacturer shuts the service down, nothing responds.",
+      "With {entries}, everything comes from servers on the internet. Without internet, or once the provider shuts the service down, nothing responds.",
     advice_cloud_devices_how:
-      "Check whether they can be connected locally; some integrations offer a local mode. Otherwise, prefer a device that works locally when you replace it.",
+      "For each integration, whether there is a local way:",
     advice_local_tts_title: "Make announcements locally",
     advice_local_tts_why: "Spoken announcements are created by a cloud service ({entries}).",
     advice_local_tts_how:
@@ -100,7 +101,8 @@ const STRINGS = {
     alt_tado: "tado° devices can also be added locally: older ones through HomeKit Device, tado° X through Matter.",
     alt_meross_cloud: "Meross LAN (HACS) controls Meross devices directly in your network.",
     alt_weather: "Weather data comes from the internet by nature. A local weather station, for example through Ecowitt, keeps working.",
-    alt_none: "No local way is known for {name}. When you replace these devices, prefer ones with Matter, Zigbee or a local API.",
+    alt_none:
+      "No local way is known for {name}. For devices, prefer ones with Matter, Zigbee or a local API when you replace them.",
     // Sentences per automation
     say_notify_lost: "notification to {who} does not arrive",
     say_notify_home: "notification to {who} only arrives at home",
@@ -251,11 +253,12 @@ const STRINGS = {
       "Diese Automationen lesen Werte von {entries} in einer Vorlage mit Ersatzwert, zum Beispiel float(10). Ohne Internet laufen sie weiter, aber mit dem Ersatzwert statt dem echten – oft, ohne dass es jemand merkt.",
     advice_substitutes_how:
       "Nimm einen Sensor bei dir zu Hause, wo es einen gibt (zum Beispiel einen eigenen Außensensor statt eines Wetterdienstes). Sonst prüfe in der Vorlage mit has_value(), ob der Wert da ist, und lege fest, was ohne ihn passieren soll.",
-    advice_cloud_devices_title: "Geräte hinter einer Hersteller-Cloud",
+    advice_cloud_devices_title:
+      "Geräte und Dienste aus der Cloud",
     advice_cloud_devices_why:
-      "Bei {entries} läuft alles über Server des Herstellers. Ohne Internet, oder wenn der Hersteller den Dienst einstellt, reagiert nichts.",
+      "Bei {entries} kommt alles von Servern im Internet. Ohne Internet, oder wenn der Anbieter den Dienst einstellt, reagiert nichts.",
     advice_cloud_devices_how:
-      "Prüfe, ob sie sich lokal einbinden lassen; manche Integrationen haben einen lokalen Modus. Sonst beim nächsten Austausch ein Gerät wählen, das lokal arbeitet.",
+      "Für jede Integration, ob es einen lokalen Weg gibt:",
     advice_local_tts_title: "Durchsagen lokal erzeugen",
     advice_local_tts_why: "Gesprochene Durchsagen erzeugt ein Cloud-Dienst ({entries}).",
     advice_local_tts_how:
@@ -276,7 +279,8 @@ const STRINGS = {
     alt_tado: "tado°-Geräte lassen sich auch lokal einbinden: ältere über HomeKit Device, tado° X über Matter.",
     alt_meross_cloud: "Meross LAN (HACS) steuert Meross-Geräte direkt im Netz.",
     alt_weather: "Wetterdaten kommen naturgemäß aus dem Internet. Eine eigene Wetterstation, zum Beispiel über Ecowitt, läuft weiter.",
-    alt_none: "Für {name} ist kein lokaler Weg bekannt. Beim Austausch Geräte mit Matter, Zigbee oder lokaler Schnittstelle bevorzugen.",
+    alt_none:
+      "Für {name} ist kein lokaler Weg bekannt. Bei Geräten beim Austausch solche mit Matter, Zigbee oder lokaler Schnittstelle bevorzugen.",
     say_notify_lost: "Benachrichtigung an {who} kommt nicht an",
     say_notify_home: "Benachrichtigung an {who} kommt nur zu Hause an",
     say_tts: "Durchsage über {who} entfällt",
@@ -379,6 +383,7 @@ const ALTERNATIVES = {
   openweathermap: "alt_weather",
   accuweather: "alt_weather",
   pirateweather: "alt_weather",
+  dwd_weather: "alt_weather",
   dwd_weather_warnings: "alt_weather",
   meteo_france: "alt_weather",
 };
@@ -484,8 +489,10 @@ class UncloudedPanel extends HTMLElement {
     }
   }
 
-  _titles(entryIds) {
-    return this._list([...new Set(entryIds.map((id) => this._entry(id)?.title).filter(Boolean))]);
+  _titles(entryIds, byIntegration = false) {
+    // Entry titles can be cryptic, e.g. a station ID; integrations are named for people.
+    const name = (e) => (byIntegration ? e.integration_name || e.title : e.title);
+    return this._list([...new Set(entryIds.map((id) => this._entry(id)).filter(Boolean).map(name))]);
   }
 
   _automationLink(automation) {
@@ -680,7 +687,11 @@ class UncloudedPanel extends HTMLElement {
       const helpers = [
         ...new Set(a.helpers.map((id) => this._entry(id)?.integration_name).filter(Boolean)),
       ];
-      const values = { entries: this._titles(a.entries), helpers: this._list(helpers) };
+      // Phones are told apart by their own names, services by their integration.
+      const values = {
+        entries: this._titles(a.entries, a.key !== "local_push"),
+        helpers: this._list(helpers),
+      };
       let how = t[`advice_${a.key}_how`];
       if (a.key === "presence" && helpers.length)
         how = helpers.length === 1 ? t.advice_presence_how_helpers1 : t.advice_presence_how_helpers;
