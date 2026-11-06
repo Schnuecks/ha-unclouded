@@ -8,6 +8,7 @@ action are followed into their own configuration.
 
 from __future__ import annotations
 
+import re
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from enum import StrEnum
@@ -76,6 +77,14 @@ _SOURCE_ATTRIBUTES = (
 _ENTITY_COLLECTIONS = ("entities", "snapshot_entities")
 # Script actions that start other scripts given as target.
 _SCRIPT_STARTERS = ("script.turn_on", "script.toggle")
+# Entity IDs read in a template, e.g. states('sensor.x') or states.sensor.x.
+_TEMPLATE_REFS = re.compile(
+    r"(?:states|state_attr|is_state|is_state_attr|has_value|state_translated)"
+    r"\(\s*['\"]([a-z_]+\.[a-z0-9_]+)['\"]"
+    r"|states\.([a-z_]+\.[a-z0-9_]+)"
+)
+# A value used in place of one that cannot be read, e.g. float(10) or default(0).
+_FALLBACK = re.compile(r"\b(?:float|int)\(\s*[^)\s]|\bdefault\(|\|\s*d\(")
 # The script component keeps its entities under its domain, without a typed key.
 SCRIPTS = "script"
 _TOP_LEVEL = {
@@ -107,6 +116,9 @@ class Dependency:
     notification: bool = False
     # Integration behind an entity without config entry, so the user can classify it.
     integration: str | None = None
+    # Read in a template that puts a fixed value in its place when it cannot be read:
+    # the automation runs on, but with that value instead of the real one.
+    substitute: bool = False
 
 
 @dataclass(slots=True)
@@ -417,6 +429,30 @@ class Analyzer:
                         self._add_entity(entity_id, part, deps, scripts)
             elif isinstance(value, (dict, list)):
                 self._walk(value, part, deps, scripts)
+            elif isinstance(value, str) and ("{{" in value or "{%" in value):
+                self._add_template(value, part, deps)
+
+    def _add_template(self, template: str, part: Part, deps: list[Dependency]) -> None:
+        """Entities a template reads; it cannot be rendered without its variables."""
+        substitute = bool(_FALLBACK.search(template))
+        for match in _TEMPLATE_REFS.finditer(template):
+            entity_id = match.group(1) or match.group(2)
+            reach, reason, entry_id = self.entity_reach(entity_id)
+            if reach not in _NEEDS_INTERNET:
+                continue
+            if substitute:
+                reason = "template_substitute"
+            deps.append(
+                Dependency(
+                    part,
+                    "template",
+                    entity_id,
+                    reach,
+                    reason,
+                    entry_id,
+                    substitute=substitute,
+                )
+            )
 
     def _add_entity(
         self, entity_id: str, part: Part, deps: list[Dependency], scripts: set[str]
@@ -464,9 +500,11 @@ class Analyzer:
 
 def judge(deps: list[Dependency]) -> tuple[Verdict, bool]:
     """Combine the dependencies of one automation into a verdict."""
-    triggers = [d for d in deps if d.part is Part.TRIGGER]
-    conditions = [d for d in deps if d.part is Part.CONDITION]
-    actions = [d for d in deps if d.part is Part.ACTION]
+    # A substitute keeps the automation running, just on a wrong value.
+    hard = [d for d in deps if not d.substitute]
+    triggers = [d for d in hard if d.part is Part.TRIGGER]
+    conditions = [d for d in hard if d.part is Part.CONDITION]
+    actions = [d for d in hard if d.part is Part.ACTION]
     affected = [d for d in deps if d.reach in _NEEDS_INTERNET]
     only_notifications = bool(affected) and all(
         d.part is Part.ACTION and d.notification for d in affected

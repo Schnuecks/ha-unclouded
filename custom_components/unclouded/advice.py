@@ -23,6 +23,7 @@ ORDER = (
     "local_push",
     "local_fallback",
     "presence",
+    "substitutes",
     "cloud_devices",
     "local_tts",
 )
@@ -57,8 +58,12 @@ def build_advice(
     for report in reports:
         for dep in report.dependencies:
             entry = by_id.get(dep.entry_id or "")
+            # Templates that carry on with a fixed value in place of a cloud one.
+            if dep.substitute:
+                found["substitutes"].automations.append(report.entity_id)
+                found["substitutes"].entries.append(dep.entry_id or "")
             # Push through the relay while local push is off.
-            if dep.reason == "mobile_app_push_relay":
+            elif dep.reason == "mobile_app_push_relay":
                 found["local_push"].automations.append(report.entity_id)
                 found["local_push"].entries.append(dep.entry_id)
             # Presence from phones only arrives over the internet while away.

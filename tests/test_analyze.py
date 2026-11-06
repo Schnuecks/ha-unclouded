@@ -598,3 +598,55 @@ async def test_open_push_channel_is_remembered(hass: HomeAssistant, setup) -> No
     (push,) = [d for d in report.dependencies if d.kind == "action"]
     assert (push.reach, push.reason) == (Reach.PARTIAL, "mobile_app_local_push")
     assert async_get_settings(hass).local_push == {phone.entry_id}
+
+
+async def test_template_with_substitute_degrades(hass: HomeAssistant, setup) -> None:
+    """A cloud value with a fallback keeps the automation running on a wrong value."""
+    report = await _analyze(
+        hass,
+        {
+            "triggers": [LOCAL_TRIGGER],
+            "actions": [
+                {
+                    "variables": {
+                        "outside": "{{ state_attr('weather.cloud_forecast', "
+                        "'temperature') | float(10) }}"
+                    }
+                },
+                {
+                    "condition": "template",
+                    "value_template": "{{ outside < 5 }}",
+                },
+                LOCAL_ACTION,
+            ],
+        },
+    )
+    assert report.verdict is Verdict.DEGRADED
+    (dep,) = [d for d in report.dependencies if d.kind == "template"]
+    assert (dep.ref, dep.substitute, dep.reason) == (
+        "weather.cloud_forecast",
+        True,
+        "template_substitute",
+    )
+
+
+async def test_template_without_substitute_counts_as_use(
+    hass: HomeAssistant, setup
+) -> None:
+    """Without a fallback a cloud value in a condition stops the run."""
+    report = await _analyze(
+        hass,
+        {
+            "triggers": [LOCAL_TRIGGER],
+            "conditions": [
+                {
+                    "condition": "template",
+                    "value_template": "{{ states.sensor.cloud_temp.state | float > 3 }}",  # noqa: E501
+                }
+            ],
+            "actions": [LOCAL_ACTION],
+        },
+    )
+    assert report.verdict is Verdict.FAILS
+    (dep,) = [d for d in report.dependencies if d.kind == "template"]
+    assert (dep.ref, dep.substitute) == ("sensor.cloud_temp", False)
