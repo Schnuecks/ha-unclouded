@@ -111,6 +111,7 @@ const STRINGS = {
     say_condition: "condition on {what} ({who}) cannot be checked",
     say_action: "{what} ({who}) is not switched",
     say_substitute: "without the internet {what} ({who}) is replaced by a fixed value, so the automation decides on that value",
+    say_alternative: "without the internet {what} ({who}) cannot be checked, but the other options of the condition still work",
     say_unknown: "unclear how {what} connects",
     say_all_local: "uses only devices in your home",
     details: "Technical details",
@@ -285,6 +286,7 @@ const STRINGS = {
     say_condition: "Bedingung zu {what} ({who}) lässt sich nicht prüfen",
     say_action: "{what} ({who}) wird nicht geschaltet",
     say_substitute: "ohne Internet wird {what} ({who}) durch einen festen Wert ersetzt, die Automation entscheidet dann danach",
+    say_alternative: "ohne Internet lässt sich {what} ({who}) nicht prüfen, die anderen Möglichkeiten der Bedingung greifen aber weiter",
     say_unknown: "unklar, wie sich {what} verbindet",
     say_all_local: "nutzt nur Geräte bei dir zu Hause",
     details: "Technische Details",
@@ -502,6 +504,7 @@ class UncloudedPanel extends HTMLElement {
       const who = this._entry(d.entry_id)?.title || d.ref;
       const what = ["entity", "template"].includes(d.kind) ? this._name(d.ref) : this._refLabel(d);
       if (d.substitute) return this._fmt(t.say_substitute, { what, who });
+      if (d.alternative) return this._fmt(t.say_alternative, { what, who });
       if (d.part === "action" && d.notification && d.ref.startsWith("notify."))
         return this._fmt(d.reach === "partial" ? t.say_notify_home : t.say_notify_lost, { who });
       if (d.part === "action" && d.ref.startsWith("tts.")) return this._fmt(t.say_tts, { who });

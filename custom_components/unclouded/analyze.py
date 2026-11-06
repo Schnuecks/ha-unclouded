@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Iterable, Mapping
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from enum import StrEnum
 from typing import Any
 
@@ -119,6 +119,9 @@ class Dependency:
     # Read in a template that puts a fixed value in its place when it cannot be read:
     # the automation runs on, but with that value instead of the real one.
     substitute: bool = False
+    # One of several alternatives in an "or" condition whose other branches work
+    # locally: it does not stop the automation by itself.
+    alternative: bool = False
 
 
 @dataclass(slots=True)
@@ -403,6 +406,10 @@ class Analyzer:
         if not isinstance(node, dict):
             return
 
+        if node.get("condition") == "or" and isinstance(node.get("conditions"), list):
+            self._walk_or(node["conditions"], part, deps, scripts)
+            return
+
         action = node.get("action", node.get("service"))
         if isinstance(action, str) and "{" not in action:
             self._add_action(action, node, part, deps, scripts)
@@ -431,6 +438,27 @@ class Analyzer:
                 self._walk(value, part, deps, scripts)
             elif isinstance(value, str) and ("{{" in value or "{%" in value):
                 self._add_template(value, part, deps)
+
+    def _walk_or(
+        self,
+        branches: list[Any],
+        part: Part,
+        deps: list[Dependency],
+        scripts: set[str],
+    ) -> None:
+        """Branches of an "or" condition; one working branch is enough."""
+        found = []
+        for branch in branches:
+            branch_deps: list[Dependency] = []
+            self._walk(branch, part, branch_deps, scripts)
+            found.append(branch_deps)
+        flat = [d for b in found for d in b]
+        if any(all(d.reach is not Reach.CLOUD for d in b) for b in found):
+            flat = [
+                replace(d, alternative=True) if d.reach is Reach.CLOUD else d
+                for d in flat
+            ]
+        deps.extend(flat)
 
     def _add_template(self, template: str, part: Part, deps: list[Dependency]) -> None:
         """Entities a template reads; it cannot be rendered without its variables."""
@@ -501,7 +529,7 @@ class Analyzer:
 def judge(deps: list[Dependency]) -> tuple[Verdict, bool]:
     """Combine the dependencies of one automation into a verdict."""
     # A substitute keeps the automation running, just on a wrong value.
-    hard = [d for d in deps if not d.substitute]
+    hard = [d for d in deps if not d.substitute and not d.alternative]
     triggers = [d for d in hard if d.part is Part.TRIGGER]
     conditions = [d for d in hard if d.part is Part.CONDITION]
     actions = [d for d in hard if d.part is Part.ACTION]
