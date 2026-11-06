@@ -35,3 +35,5 @@ and the project uses [Semantic Versioning](https://semver.org/).
   sentences are played from the TTS cache without the internet, local TTS as a fallback.
 - Templates are read for the entities they use. A cloud value read with a fallback, such as
   `float(10)`, is reported separately: the automation keeps running, but on the fallback.
+- A cloud value in an "or" condition no longer counts as a failure when another branch of
+  that condition works locally.

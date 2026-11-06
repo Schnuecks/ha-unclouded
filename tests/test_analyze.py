@@ -650,3 +650,65 @@ async def test_template_without_substitute_counts_as_use(
     assert report.verdict is Verdict.FAILS
     (dep,) = [d for d in report.dependencies if d.kind == "template"]
     assert (dep.ref, dep.substitute) == ("sensor.cloud_temp", False)
+
+
+async def test_or_condition_with_local_branch_degrades(
+    hass: HomeAssistant, setup
+) -> None:
+    """A cloud value in an "or" condition next to a local one does not stop the run."""
+    report = await _analyze(
+        hass,
+        {
+            "triggers": [LOCAL_TRIGGER],
+            "conditions": [
+                {
+                    "condition": "or",
+                    "conditions": [
+                        {
+                            "condition": "numeric_state",
+                            "entity_id": "sensor.cloud_temp",
+                            "below": 5,
+                        },
+                        {
+                            "condition": "numeric_state",
+                            "entity_id": "sensor.local_temp",
+                            "below": 60,
+                        },
+                    ],
+                }
+            ],
+            "actions": [LOCAL_ACTION],
+        },
+    )
+    assert report.verdict is Verdict.DEGRADED
+    (dep,) = [d for d in report.dependencies if d.ref == "sensor.cloud_temp"]
+    assert dep.alternative
+
+
+async def test_or_condition_with_only_cloud_fails(hass: HomeAssistant, setup) -> None:
+    """Without a local branch the "or" condition still cannot be checked."""
+    report = await _analyze(
+        hass,
+        {
+            "triggers": [LOCAL_TRIGGER],
+            "conditions": [
+                {
+                    "condition": "or",
+                    "conditions": [
+                        {
+                            "condition": "state",
+                            "entity_id": "sensor.cloud_temp",
+                            "state": "1",
+                        },
+                        {
+                            "condition": "state",
+                            "entity_id": "weather.cloud_forecast",
+                            "state": "x",
+                        },
+                    ],
+                }
+            ],
+            "actions": [LOCAL_ACTION],
+        },
+    )
+    assert report.verdict is Verdict.FAILS
