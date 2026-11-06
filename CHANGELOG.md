@@ -27,3 +27,5 @@ and the project uses [Semantic Versioning](https://semver.org/).
   satellites using it.
 - Local push on iPhones and iPads: their config entry does not say whether it is on, so
   Unclouded looks for the push channel the app keeps open at home and remembers the device.
+- Automations named in suggestions and repair issues link to their editor; repair issues
+  link to the panel.

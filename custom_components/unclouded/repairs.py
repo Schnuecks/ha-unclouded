@@ -4,17 +4,20 @@ that need more of it than before (see changes.py)."""
 from __future__ import annotations
 
 from typing import Any
+from urllib.parse import quote
 
 from homeassistant.components.repairs import ConfirmRepairFlow, RepairsFlow
 from homeassistant.core import HomeAssistant, split_entity_id
 from homeassistant.helpers import issue_registry as ir
 
-from .analyze import Verdict, async_analyze_automations
+from .analyze import AutomationReport, Verdict, async_analyze_automations
 from .classify import async_classify_entries
 from .const import DOMAIN
 from .settings import async_get_settings
 
 _PREFIX = "important_"
+# The panel's path, as registered in __init__.py.
+PANEL_PATH = "/unclouded"
 
 
 def _issue_id(entity_id: str) -> str:
@@ -39,11 +42,11 @@ async def async_update_issues(hass: HomeAssistant) -> None:
             key = "important_notifications"
         else:
             key = f"important_{report.verdict}"
-        wanted[_issue_id(report.entity_id)] = (key, report.name)
+        wanted[_issue_id(report.entity_id)] = (key, report)
 
     for issue_id in _own_issues(hass) - wanted.keys():
         ir.async_delete_issue(hass, DOMAIN, issue_id)
-    for issue_id, (key, name) in wanted.items():
+    for issue_id, (key, report) in wanted.items():
         ir.async_create_issue(
             hass,
             DOMAIN,
@@ -51,8 +54,20 @@ async def async_update_issues(hass: HomeAssistant) -> None:
             is_fixable=False,
             severity=ir.IssueSeverity.WARNING,
             translation_key=key,
-            translation_placeholders={"name": name},
+            translation_placeholders={
+                "name": report.name,
+                "automation": _automation_link(report),
+                "panel": PANEL_PATH,
+            },
         )
+
+
+def _automation_link(report: AutomationReport) -> str:
+    """The automation's name, linked to its editor where it has one."""
+    name = report.name.replace("[", "(").replace("]", ")")
+    if report.config_id is None:
+        return f"**{name}**"
+    return f"[**{name}**](/config/automation/edit/{quote(report.config_id)})"
 
 
 def async_remove_issues(hass: HomeAssistant) -> None:

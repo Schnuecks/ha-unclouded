@@ -214,7 +214,11 @@ async def test_important_automation_raises_issue(
     issue = issues.async_get_issue(DOMAIN, "important_alarm")
     assert issue is not None
     assert issue.translation_key == "important_fails"
-    assert issue.translation_placeholders == {"name": "Alarm"}
+    assert issue.translation_placeholders == {
+        "name": "Alarm",
+        "automation": "[**Alarm**](/config/automation/edit/a)",
+        "panel": "/unclouded",
+    }
     (report,) = await async_analyze_automations(hass)
     assert report.important
 
