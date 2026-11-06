@@ -78,7 +78,7 @@ const STRINGS = {
     advice_local_tts_title: "Make announcements locally",
     advice_local_tts_why: "Spoken announcements are created by a cloud service ({entries}).",
     advice_local_tts_how:
-      "Set up local text-to-speech, for example the Piper add-on, and use it in these automations.",
+      "Two ways that also work on small hardware: Home Assistant keeps every announcement it has created once (folder tts) and plays it again from there, even without the internet – so use a fixed sentence for important announcements, without changing values in it. Or use local text-to-speech such as Piper only as a fallback while the internet is down; for short sentences it is fast enough even on small machines.",
     // Concrete steps with links
     stepsLabel: "Go to:",
     link_integration: "{name} settings",
@@ -136,7 +136,7 @@ const STRINGS = {
     stage_stt: "Speech to text",
     stage_conversation: "Conversation agent",
     stage_tts: "Text to speech",
-    voiceAdvice: "Local alternatives: Whisper (speech to text) and Piper (text to speech) through the Wyoming integration, and the built-in Home Assistant agent – or turn on “Prefer handling commands locally” so device commands keep working.",
+    voiceAdvice: "A fully local voice assistant needs a lot of computing power, above all for speech recognition (Whisper); on small machines it is often too slow to use. Realistic: commands Home Assistant understands itself work locally with “Prefer handling commands locally”, and announcements with fixed sentences come from the cache. Local alternatives, if your hardware is up to it: Whisper and Piper through the Wyoming integration.",
     integrations: "Integrations",
     integrationsHint: "How each set-up integration connects, as found out by Unclouded. Automations are judged on this basis.",
     reach_cloud: "Cloud",
@@ -246,7 +246,7 @@ const STRINGS = {
     advice_local_tts_title: "Durchsagen lokal erzeugen",
     advice_local_tts_why: "Gesprochene Durchsagen erzeugt ein Cloud-Dienst ({entries}).",
     advice_local_tts_how:
-      "Richte eine lokale Sprachausgabe ein, zum Beispiel das Add-on Piper, und nutze sie in diesen Automationen.",
+      "Zwei Wege, die auch auf kleiner Hardware gehen: Home Assistant hebt jede einmal erzeugte Durchsage auf (Ordner tts) und spielt sie von dort erneut ab, auch ohne Internet – nimm für wichtige Durchsagen also einen festen Satz ohne wechselnde Werte. Oder nutze eine lokale Sprachausgabe wie Piper nur als Ersatz, solange das Internet weg ist; für kurze Sätze ist sie auch auf kleinen Rechnern schnell genug.",
     // Konkrete Schritte mit Links
     stepsLabel: "Direkt zu:",
     link_integration: "{name} einstellen",
@@ -303,7 +303,7 @@ const STRINGS = {
     stage_stt: "Sprache zu Text",
     stage_conversation: "Gesprächsagent",
     stage_tts: "Text zu Sprache",
-    voiceAdvice: "Lokale Alternativen: Whisper (Sprache zu Text) und Piper (Text zu Sprache) über die Wyoming-Integration sowie der eingebaute Home-Assistant-Agent – oder „Befehle bevorzugt lokal verarbeiten“ einschalten, damit Gerätebefehle weiter gehen.",
+    voiceAdvice: "Ein ganz lokaler Sprachassistent braucht viel Rechenleistung, vor allem die Spracherkennung (Whisper); auf kleinen Rechnern ist sie oft zu langsam zum Benutzen. Realistisch: Befehle, die Home Assistant selbst versteht, laufen mit „Befehle bevorzugt lokal verarbeiten“ lokal, und Durchsagen mit festen Sätzen kommen aus dem Zwischenspeicher. Lokale Alternativen, wenn die Hardware reicht: Whisper und Piper über die Wyoming-Integration.",
     integrations: "Integrationen",
     integrationsHint: "Wie sich jede eingerichtete Integration verbindet, so wie Unclouded es ermittelt hat. Darauf beruht die Bewertung der Automationen.",
     reach_cloud: "Cloud",
