@@ -125,7 +125,7 @@ class AutomationReport:
     important: bool = False
 
 
-def _worst(reaches: Iterable[Source]) -> Source:
+def worst(reaches: Iterable[Source]) -> Source:
     result: Source | None = None
     for item in reaches:
         if result is None or _SEVERITY[item[0]] > _SEVERITY[result[0]]:
@@ -184,7 +184,7 @@ class Analyzer:
         if domain == "zone":
             # A zone counts the persons in it.
             persons = self.hass.states.async_entity_ids("person")
-            return _worst(self.entity_reach(p, seen) for p in persons)
+            return worst(self.entity_reach(p, seen) for p in persons)
         if domain == "person":
             trackers = state.attributes.get("device_trackers", []) if state else []
             sources = [self._tracker_reach(t, seen) for t in trackers]
@@ -192,7 +192,7 @@ class Analyzer:
             for source in sources:
                 if source[0] is Reach.LOCAL:
                     return Reach.LOCAL, "person_local_tracker", source[2]
-            return _worst(sources)
+            return worst(sources)
 
         platform = domain
         if entry := self.ent_reg.async_get(entity_id):
@@ -200,15 +200,15 @@ class Analyzer:
             if entry.config_entry_id:
                 result = self._entry(entry.config_entry_id)
             else:
-                result = self._integration(entry.platform)
+                result = self.integration_reach(entry.platform)
         else:
-            result = self._integration(domain)
+            result = self.integration_reach(domain)
 
         # Helpers are as dependent as the entities they are computed from.
         if (result[0] is Reach.INTERNAL or platform in self.helpers) and (
             sources := self.sources(entity_id, entry)
         ):
-            return _worst(self.entity_reach(s, seen) for s in sorted(sources))
+            return worst(self.entity_reach(s, seen) for s in sorted(sources))
         return result
 
     def sources(self, entity_id: str, entry: er.RegistryEntry | None) -> set[str]:
@@ -272,7 +272,7 @@ class Analyzer:
                 return entity
         return None
 
-    def _integration(self, domain: str) -> Source:
+    def integration_reach(self, domain: str) -> Source:
         """Reach of an entity that belongs to no config entry."""
         reach, reason = reach_from_iot_class(self.iot_classes.get(domain))
         # The user only fills gaps: a choice counts while nothing else is known.
@@ -323,7 +323,7 @@ class Analyzer:
             return reach, reason, entry_id, True
         # Actions of integrations with config entries, e.g. pushover or a cloud AI.
         if entries := self.hass.config_entries.async_entries(domain):
-            reach, reason, entry_id = _worst(self._entry(e.entry_id) for e in entries)
+            reach, reason, entry_id = worst(self._entry(e.entry_id) for e in entries)
             return reach, reason, entry_id, notification
         return None
 
@@ -339,7 +339,7 @@ class Analyzer:
                 return Reach.UNKNOWN, "mobile_app_no_push", entry.entry_id
         if domain := self._legacy_notify_owner(name):
             if entries := self.hass.config_entries.async_entries(domain):
-                return _worst(self._entry(e.entry_id) for e in entries)
+                return worst(self._entry(e.entry_id) for e in entries)
             reach, reason = reach_from_iot_class(self.iot_classes.get(domain))
             return reach, reason, None
         # Newer integrations offer notify entities.
@@ -481,10 +481,8 @@ def judge(deps: list[Dependency]) -> tuple[Verdict, bool]:
     return Verdict.WORKS, False
 
 
-async def async_analyze_automations(hass: HomeAssistant) -> list[AutomationReport]:
-    """Analyze every automation of this instance."""
-    if AUTOMATIONS not in hass.data:
-        return []
+async def async_build_analyzer(hass: HomeAssistant) -> Analyzer:
+    """Set up an analyzer with the current classification of this instance."""
     settings = async_get_settings(hass)
     entries = await async_classify_entries(hass, settings.overrides)
     domains = {e.platform for e in er.async_get(hass).entities.values()}
@@ -498,7 +496,15 @@ async def async_analyze_automations(hass: HomeAssistant) -> list[AutomationRepor
         for d, i in integrations.items()
         if getattr(i, "integration_type", None) == "helper"
     }
-    analyzer = Analyzer(hass, entries, iot_classes, helpers, settings.overrides)
+    return Analyzer(hass, entries, iot_classes, helpers, settings.overrides)
+
+
+async def async_analyze_automations(hass: HomeAssistant) -> list[AutomationReport]:
+    """Analyze every automation of this instance."""
+    if AUTOMATIONS not in hass.data:
+        return []
+    settings = async_get_settings(hass)
+    analyzer = await async_build_analyzer(hass)
 
     reports = []
     for automation in hass.data[AUTOMATIONS].entities:

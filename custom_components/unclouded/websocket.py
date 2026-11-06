@@ -21,6 +21,7 @@ from .settings import (
     entry_key,
     prune,
 )
+from .voice import async_analyze_voice
 
 _REGISTERED = f"{DOMAIN}_websocket_registered"
 
@@ -65,6 +66,7 @@ async def ws_automations(
         {
             "automations": [asdict(r) for r in reports],
             "advice": [asdict(a) for a in build_advice(hass, reports, entries)],
+            "voice": [asdict(p) for p in await async_analyze_voice(hass)],
         },
     )
 

@@ -22,3 +22,6 @@ and the project uses [Semantic Versioning](https://semver.org/).
   be overruled.
 - Important automations (★) get a repair issue while they depend on the internet.
 - A repair issue when an integration needs more of the internet after an update than before.
+- The voice assistant: every Assist pipeline with its wake word, speech-to-text, conversation
+  agent and text-to-speech, whether each works without the internet, and the voice
+  satellites using it.

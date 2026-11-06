@@ -107,6 +107,19 @@ const STRINGS = {
     part_condition: "Condition",
     part_action: "Action",
     via: "via",
+    voice: "Voice assistant",
+    voiceHint: "Each Assist pipeline turns speech into text, acts on it and answers. If one step needs the internet, voice control does not work during an outage.",
+    voiceOk: "works without the internet",
+    voicePartial: "only partly without the internet",
+    voiceFails: "does not work without the internet",
+    voiceUnknown: "not sure",
+    voicePreferred: "preferred",
+    voiceUsedBy: "Used by: {names}",
+    stage_wake_word: "Wake word",
+    stage_stt: "Speech to text",
+    stage_conversation: "Conversation agent",
+    stage_tts: "Text to speech",
+    voiceAdvice: "Local alternatives: Whisper (speech to text) and Piper (text to speech) through the Wyoming integration, and the built-in Home Assistant agent – or turn on “Prefer handling commands locally” so device commands keep working.",
     integrations: "Integrations",
     integrationsHint: "How each set-up integration connects, as found out by Unclouded. Automations are judged on this basis.",
     reach_cloud: "Cloud",
@@ -118,6 +131,8 @@ const STRINGS = {
     error: "Error",
     reasons: {
       iot_class_local: "talks to devices in your network",
+      built_in_agent: "built-in agent of Home Assistant",
+      agent_local_first: "cloud agent, but commands Home Assistant understands itself are handled locally",
       iot_class_cloud: "talks to a cloud service",
       iot_class_calculated: "computed inside Home Assistant",
       iot_class_missing: "the integration does not say how it connects",
@@ -242,6 +257,19 @@ const STRINGS = {
     part_condition: "Bedingung",
     part_action: "Aktion",
     via: "über",
+    voice: "Sprachassistent",
+    voiceHint: "Jede Assist-Pipeline wandelt Sprache in Text, führt den Befehl aus und antwortet. Braucht ein Schritt das Internet, geht die Sprachsteuerung bei einem Ausfall nicht.",
+    voiceOk: "geht ohne Internet",
+    voicePartial: "geht ohne Internet nur teilweise",
+    voiceFails: "geht ohne Internet nicht",
+    voiceUnknown: "unklar",
+    voicePreferred: "bevorzugt",
+    voiceUsedBy: "Genutzt von: {names}",
+    stage_wake_word: "Aktivierungswort",
+    stage_stt: "Sprache zu Text",
+    stage_conversation: "Gesprächsagent",
+    stage_tts: "Text zu Sprache",
+    voiceAdvice: "Lokale Alternativen: Whisper (Sprache zu Text) und Piper (Text zu Sprache) über die Wyoming-Integration sowie der eingebaute Home-Assistant-Agent – oder „Befehle bevorzugt lokal verarbeiten“ einschalten, damit Gerätebefehle weiter gehen.",
     integrations: "Integrationen",
     integrationsHint: "Wie sich jede eingerichtete Integration verbindet, so wie Unclouded es ermittelt hat. Darauf beruht die Bewertung der Automationen.",
     reach_cloud: "Cloud",
@@ -253,6 +281,8 @@ const STRINGS = {
     error: "Fehler",
     reasons: {
       iot_class_local: "spricht mit Geräten im eigenen Netz",
+      built_in_agent: "eingebauter Agent von Home Assistant",
+      agent_local_first: "Cloud-Agent, aber Befehle, die Home Assistant selbst versteht, laufen lokal",
       iot_class_cloud: "spricht mit einem Cloud-Dienst",
       iot_class_calculated: "wird in Home Assistant berechnet",
       iot_class_missing: "die Integration gibt nicht an, wie sie sich verbindet",
@@ -335,6 +365,7 @@ class UncloudedPanel extends HTMLElement {
       ]);
       this._automations = automations.automations;
       this._advice = automations.advice || [];
+      this._voice = automations.voice || [];
       this._entries = entries.entries;
       this._overrides = entries.overrides || {};
       this._error = null;
@@ -702,6 +733,56 @@ class UncloudedPanel extends HTMLElement {
     );
   }
 
+  _engineLabel(stage) {
+    const entry = stage.entry_id && this._entry(stage.entry_id);
+    const state = stage.engine.includes(".") && this._hass.states?.[stage.engine];
+    return state?.attributes?.friendly_name || entry?.title || stage.engine;
+  }
+
+  _renderVoice() {
+    const t = this._t;
+    if (!this._voice?.length) return "";
+    const verdict = (reach) =>
+      LOCAL.includes(reach)
+        ? ["works", t.voiceOk]
+        : reach === "partial"
+          ? ["partial", t.voicePartial]
+          : reach === "cloud"
+            ? ["cloud", t.voiceFails]
+            : ["unknown", t.voiceUnknown];
+    const anyCloud = this._voice.some((p) => !LOCAL.includes(p.reach));
+    const pipelines = this._voice
+      .map((p) => {
+        const [cls, text] = verdict(p.reach);
+        const stages = p.stages
+          .map(
+            (s) => `
+            <tr>
+              <td>${esc(t[`stage_${s.kind}`])}</td>
+              <td>${esc(this._engineLabel(s))}</td>
+              <td><span class="badge ${esc(s.reach)}">${esc(t[`reach_${s.reach}`])}</span></td>
+              <td class="muted">${esc(this._reason(s.reason))}</td>
+            </tr>`
+          )
+          .join("");
+        return `
+          <div class="pipeline">
+            <h3>${esc(p.name)}${p.preferred ? ` <span class="muted">· ${esc(t.voicePreferred)}</span>` : ""}
+              <span class="badge ${esc(cls === "works" ? "local" : cls)}">${esc(text)}</span></h3>
+            ${p.satellites.length ? `<p class="muted">${esc(this._fmt(t.voiceUsedBy, { names: p.satellites.join(", ") }))}</p>` : ""}
+            <table>${stages}</table>
+          </div>`;
+      })
+      .join("");
+    return `
+      <details class="card" id="voice" ${anyCloud ? "open" : ""}>
+        <summary><h2>${esc(t.voice)} · ${this._voice.length}</h2></summary>
+        <p class="muted">${esc(t.voiceHint)}</p>
+        ${pipelines}
+        ${anyCloud ? `<p>${esc(t.voiceAdvice)}</p>` : ""}
+      </details>`;
+  }
+
   _renderEntries() {
     const t = this._t;
     const rows = [...this._entries]
@@ -739,6 +820,7 @@ class UncloudedPanel extends HTMLElement {
         this._renderDecide() +
         this._renderAdvice() +
         this._renderVerdicts() +
+        this._renderVoice() +
         this._renderEntries();
     else body = `<p class="muted">…</p>`;
     this.shadowRoot.innerHTML = `
@@ -894,6 +976,8 @@ const STYLE = `
   .badge { display: inline-block; font-size: 12px; padding: 1px 8px; border-radius: 10px;
     border: 1px solid var(--divider-color); color: var(--secondary-text-color); white-space: nowrap; }
   .badge.spaced { margin-left: 4px; }
+  .pipeline { margin: 12px 0; }
+  .pipeline h3 { font-size: 15px; margin: 0 0 4px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
   .badge.cloud { color: var(--uc-fails); border-color: var(--uc-fails); }
   .badge.partial { color: var(--uc-degraded); border-color: var(--uc-degraded); }
   .badge.local, .badge.internal { color: var(--uc-works); border-color: var(--uc-works); }
