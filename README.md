@@ -38,7 +38,9 @@ words, what you can change.
   or loses function, and why – for example "Notification to Alex's phone does not arrive".
 - **Suggestions from your setup:** turn on local push, give important alerts a second, local
   way, detect presence through your router as well (it names the exact entry for each
-  phone), devices behind a manufacturer's cloud, local text-to-speech.
+  phone), devices and services in the cloud with a known local way where there is one,
+  announcements that also work offline. Each suggestion links to the page where you act on
+  it.
 - **Looks deeper than the integration list:** follows scripts, scenes, groups, template
   sensors and other helpers to their sources, persons and zones to the phones behind them,
   and notifications to the way they are delivered.

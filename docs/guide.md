@@ -33,7 +33,12 @@ Open **Unclouded** in the sidebar. Only admins see it. From top to bottom:
    Each automation has one sentence that says why, **Open ›** goes to the automation editor
    and **Technical details** lists every trigger, condition and action that needs the
    internet, with the integration behind it and the reason.
-6. **Integrations:** every set-up integration with how Unclouded classified it and why.
+6. **Voice assistant:** every Assist pipeline with its wake word, speech-to-text,
+   conversation agent and text-to-speech, whether each works without the internet, and the
+   voice satellites using it.
+7. **Real outages:** what really became unavailable during the last outages, compared with
+   Unclouded's assessment (see below).
+8. **Integrations:** every set-up integration with how Unclouded classified it and why.
 
 Every change you make in the panel is confirmed at the bottom of the screen.
 
@@ -80,7 +85,14 @@ Unclouded walks through each automation's triggers, conditions and actions and f
   the home network, for example from the router, counts as local,
 - **notifications** to the integration and the way they are delivered.
 
-Entity IDs that a template builds only at run time cannot be followed and are left out.
+Templates are searched for the entities they read (`states()`, `state_attr()`,
+`is_state()`, `states.sensor.x` …). If a template reads a cloud value with a fallback, such as
+`float(10)` or `default(0)`, the automation keeps running without the internet but decides on
+the fallback; Unclouded reports this separately. Entity IDs that a template builds only at
+run time cannot be followed and are left out.
+
+In an **or** condition, a cloud value does not stop the automation as long as another branch
+of the condition works locally.
 
 ## Important automations and repairs
 
@@ -104,13 +116,36 @@ every hour and after every change in the panel.
 | **Turn on local push** | Notifications to a phone go through the relay server. |
 | **Give important alerts a second, local way** | An automation only sends push notifications. |
 | **Detect presence locally as well** | Coming home or leaving only comes from phones. If a router integration already sees the phone, its entry is named, also when it is still disabled. |
-| **Devices behind a manufacturer's cloud** | An automation relies on a cloud integration. |
-| **Make announcements locally** | Spoken announcements are created by a cloud service. |
+| **Check values that are replaced without the internet** | A template reads a cloud value with a fallback. |
+| **Devices and services in the cloud** | An automation relies on a cloud integration. Each one is listed with a known local way, if there is one. |
+| **Make announcements locally** | Spoken announcements are created by a cloud service. Fixed sentences are played from Home Assistant's cache, also without the internet. |
+
+Every suggestion links to the page where you can act on it, and the automations it concerns
+link to their editor. Unclouded itself changes nothing.
+
+## Real outages
+
+The sensor **Internet** (`binary_sensor.unclouded_internet`) shows whether Home Assistant
+reaches the internet. Once a minute Unclouded opens a connection to the public DNS servers
+1.1.1.1 and 9.9.9.9 on port 53 and closes it again; nothing is sent. Only when neither answers
+twice in a row does the internet count as down. Outages under two minutes are not kept.
+
+After an outage, the panel shows what really became unavailable in that time, from the start
+of the outage until five minutes after its end:
+
+- **failed as expected:** cloud integrations whose entities went away,
+- **classified as local, but failed:** a hint that something else was involved, for example
+  a cloud login or a bridge,
+- **classified as cloud, but kept working:** only after outages of 30 minutes or more;
+  it may work locally after all, or show stored values.
+
+What was unavailable around a restart of Home Assistant is left out.
 
 ## Questions
 
 **Does Unclouded cut the internet to test this?** No. It works from how integrations connect
-and never changes anything. The result is a careful estimate, not a measurement.
+and never changes anything. The result is an estimate; after a real outage the panel shows
+how well it matched.
 
 **An alarm that only sends a notification is listed under "Only lose their notifications",
 although it then does nothing. Why?** Because the notification is all it loses. For an alarm
@@ -121,5 +156,6 @@ suggestions describe.
 integration and how it is set up.
 
 **What does Unclouded store?** Your choices for unknown integrations and the important
-automations in its config entry, and the last known state of each integration in
-`.storage/unclouded.baseline`. Removing Unclouded removes both and its repair issues.
+automations in its config entry, together with the phones seen with local push; the last
+known state of each integration in `.storage/unclouded.baseline`; the last ten outages in
+`.storage/unclouded.outages`. Removing Unclouded removes all of it and its repair issues.

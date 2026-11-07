@@ -40,8 +40,9 @@ klaren Worten, was du ändern kannst.
   an“.
 - **Vorschläge aus deiner Einrichtung:** Lokalen Push einschalten, wichtigen Meldungen einen
   zweiten, lokalen Weg geben, Anwesenheit zusätzlich über den Router erkennen (mit dem
-  genauen Eintrag für jedes Handy), Geräte hinter einer Hersteller-Cloud, lokale
-  Sprachausgabe.
+  genauen Eintrag für jedes Handy), Geräte und Dienste aus der Cloud mit einem bekannten
+  lokalen Weg, wo es einen gibt, Durchsagen, die auch offline gehen. Jeder Vorschlag verlinkt
+  die Seite, auf der du ihn umsetzt.
 - **Schaut tiefer als die Integrationsliste:** folgt Skripten, Szenen, Gruppen,
   Template-Sensoren und anderen Helfern bis zu ihren Quellen, Personen und Zonen bis zu den
   Handys und Benachrichtigungen bis zu ihrem Zustellweg.
