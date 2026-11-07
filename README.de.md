@@ -54,8 +54,14 @@ klaren Worten, was du ändern kannst.
   vorher ohne auskam, meldet das ein Reparaturhinweis.
 - **Lücken füllst du:** Eine Integration, die nicht angibt, wie sie sich verbindet, kannst du
   selbst einstufen. Was Unclouded selbst ermittelt hat, lässt sich nicht überstimmen.
-- **Liest nur:** Unclouded ändert nichts an deiner Einrichtung und spricht mit nichts
-  außerhalb von Home Assistant.
+- **Sprachassistent:** prüft jede Assist-Pipeline Schritt für Schritt und nennt die
+  Sprachsatelliten, die sie nutzen.
+- **Werte, die ohne Internet ersetzt werden:** findet Templates, die einen Cloud-Wert mit
+  Ersatzwert wie `float(10)` lesen, sodass die Automation still nach dem Ersatzwert entscheidet.
+- **Echte Ausfälle:** ein Sensor zeigt, ob das Internet erreichbar ist. Nach einem Ausfall
+  vergleicht Unclouded, was wirklich nicht erreichbar war, mit seiner Einschätzung.
+- **Liest nur:** Unclouded ändert nichts an deiner Einrichtung. Die einzige Verbindung, die es
+  selbst aufbaut, ist die Prüfung, ob das Internet erreichbar ist (siehe unten).
 
 ## So funktioniert es
 
@@ -94,8 +100,13 @@ Unclouded** hinzufügen. Das Panel erscheint für Administratoren in der Seitenl
 - **Templates in Aktionen:** Entity-IDs, die ein Template erst zur Laufzeit bildet, lassen
   sich nicht verfolgen und werden ausgelassen.
 - **Benachrichtigungen:** Ist in der Companion App Lokaler Push eingeschaltet, kommen
-  Nachrichten zu Hause auch ohne Internet an. Unclouded erkennt das an der Registrierung des
-  Handys.
+  Nachrichten zu Hause auch ohne Internet an. Unclouded erkennt das bei Android an der
+  Registrierung der App, bei iPhone und iPad am Push-Kanal, den die App zu Hause offen hält.
+- **Internet-Prüfung:** Einmal pro Minute baut Unclouded eine Verbindung zu den öffentlichen
+  DNS-Servern 1.1.1.1 und 9.9.9.9 auf Port 53 auf und schließt sie wieder; gesendet wird
+  nichts. Erst wenn zweimal hintereinander keiner antwortet, gilt das Internet als weg.
+- **Neustarts:** Was rund um einen Neustart von Home Assistant nicht erreichbar war, bleibt
+  beim Vergleich mit echten Ausfällen außen vor.
 - **Falsch eingestuft?** Bitte ein Issue mit der Integration und ihrer Einrichtung eröffnen,
   damit es für alle korrigiert wird; siehe [CONTRIBUTING](CONTRIBUTING.md).
 

@@ -16,11 +16,13 @@ from homeassistant.helpers.start import async_at_started
 
 from . import websocket
 from .changes import Baseline
-from .const import DOMAIN
+from .const import DOMAIN, WATCHER
+from .outages import Watcher
 from .push import async_record_local_push
 from .repairs import async_remove_issues, async_update_issues
 
 PANEL_URL = "unclouded"
+PLATFORMS = ["binary_sensor"]
 STATIC_URL = "/unclouded_static"
 PANEL_JS = Path(__file__).parent / "frontend" / "unclouded-panel.js"
 _STATIC_REGISTERED = f"{DOMAIN}_static_registered"
@@ -34,6 +36,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Unclouded from a config entry."""
     entry.runtime_data = Baseline(hass)
     websocket.async_register(hass)
+    watcher = hass.data[WATCHER] = Watcher(hass)
+    entry.async_on_unload(await watcher.async_start())
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     # Static paths cannot be removed again, so they are registered once per run.
     if not hass.data.get(_STATIC_REGISTERED):
@@ -78,9 +83,12 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
     frontend.async_remove_panel(hass, PANEL_URL, warn_if_unknown=False)
     async_remove_issues(hass)
-    return True
+    unloaded = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    hass.data.pop(WATCHER, None)
+    return unloaded
 
 
 async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Forget the remembered state when Unclouded is removed."""
     await Baseline(hass).async_remove()
+    await Watcher(hass).async_remove()

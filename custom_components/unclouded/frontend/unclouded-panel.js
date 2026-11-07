@@ -133,6 +133,21 @@ const STRINGS = {
     part_condition: "Condition",
     part_action: "Action",
     via: "via",
+    outagesTitle: "Real outages",
+    outagesNone: "No internet outage noticed yet. Unclouded checks once a minute whether the internet can be reached (sensor “Internet”) and compares its assessment with what really happens at the next outage.",
+    outagesHint: "What really became unavailable while the internet was down, compared with Unclouded's assessment.",
+    outageNow: "The internet is down right now.",
+    outageOngoing: "since {start}",
+    outagePeriod: "{start}, {minutes} min",
+    outageConfirmed: "{n} integrations failed as expected.",
+    outageConfirmed1: "1 integration failed as expected.",
+    outageSurprise: "Classified as local, but failed",
+    outageKept: "Classified as cloud, but kept working",
+    outageGone: "{gone} of {total} entities unavailable",
+    outageKeptHint: "Maybe it works locally after all, or it shows stored values. If you know it works without the internet, tell us in an issue.",
+    outageSurpriseHint: "These may depend on something else that was down, e.g. a cloud login or a bridge.",
+    outageNothing: "Nothing became unavailable.",
+    outageRestarts: "Home Assistant restarted during this time; what was unavailable around the restart is left out.",
     voice: "Voice assistant",
     voiceHint: "Each Assist pipeline turns speech into text, acts on it and answers. If one step needs the internet, voice control does not work during an outage.",
     voiceOk: "works without the internet",
@@ -310,6 +325,21 @@ const STRINGS = {
     part_condition: "Bedingung",
     part_action: "Aktion",
     via: "über",
+    outagesTitle: "Echte Ausfälle",
+    outagesNone: "Bisher ist noch kein Internetausfall aufgefallen. Unclouded prüft jede Minute, ob das Internet erreichbar ist (Sensor „Internet“), und vergleicht beim nächsten Ausfall seine Einschätzung mit dem, was wirklich passiert.",
+    outagesHint: "Was ohne Internet wirklich nicht mehr erreichbar war, verglichen mit der Einschätzung von Unclouded.",
+    outageNow: "Das Internet ist gerade weg.",
+    outageOngoing: "seit {start}",
+    outagePeriod: "{start}, {minutes} min",
+    outageConfirmed: "{n} Integrationen fielen wie erwartet aus.",
+    outageConfirmed1: "1 Integration fiel wie erwartet aus.",
+    outageSurprise: "Als lokal eingestuft, aber ausgefallen",
+    outageKept: "Als Cloud eingestuft, lief aber weiter",
+    outageGone: "{gone} von {total} Entitäten nicht erreichbar",
+    outageKeptHint: "Vielleicht läuft sie doch lokal, oder sie zeigt gespeicherte Werte. Wenn du weißt, dass sie ohne Internet geht, sag uns in einem Issue Bescheid.",
+    outageSurpriseHint: "Sie hängen vielleicht an etwas anderem, das ausgefallen ist, etwa an einer Cloud-Anmeldung oder einer Bridge.",
+    outageNothing: "Alles blieb erreichbar.",
+    outageRestarts: "Home Assistant wurde in dieser Zeit neu gestartet; was rund um den Neustart nicht erreichbar war, bleibt außen vor.",
     voice: "Sprachassistent",
     voiceHint: "Jede Assist-Pipeline wandelt Sprache in Text, führt den Befehl aus und antwortet. Braucht ein Schritt das Internet, geht die Sprachsteuerung bei einem Ausfall nicht.",
     voiceOk: "geht ohne Internet",
@@ -430,10 +460,12 @@ class UncloudedPanel extends HTMLElement {
 
   async _load() {
     try {
-      const [automations, entries] = await Promise.all([
+      const [automations, entries, outages] = await Promise.all([
         this._hass.callWS({ type: "unclouded/automations" }),
         this._hass.callWS({ type: "unclouded/entries" }),
+        this._hass.callWS({ type: "unclouded/outages" }).catch(() => null),
       ]);
+      this._outages = outages;
       this._automations = automations.automations;
       this._advice = automations.advice || [];
       this._voice = automations.voice || [];
@@ -930,6 +962,57 @@ class UncloudedPanel extends HTMLElement {
       </details>`;
   }
 
+  _when(iso) {
+    return new Date(iso).toLocaleString(this._hass.language, {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+  }
+
+  _renderOutages() {
+    const t = this._t;
+    const data = this._outages;
+    if (!data) return "";
+    const open = data.outages.find((o) => !o.end);
+    const now = open ? `<p class="error">${esc(t.outageNow)} ${esc(this._fmt(t.outageOngoing, { start: this._when(open.start) }))}</p>` : "";
+    if (!data.evaluated.length)
+      return `
+        <details class="card" id="outages">
+          <summary><h2>${esc(t.outagesTitle)}</h2></summary>
+          ${now}<p class="muted">${esc(t.outagesNone)}</p>
+        </details>`;
+    const name = (r) => this._entry(r.entry_id)?.integration_name || this._entry(r.entry_id)?.title || r.entry_id;
+    const list = (rows, title, hint) =>
+      rows.length
+        ? `<h3>${esc(title)}</h3><ul class="steps">${rows
+            .map((r) => `<li>${esc(name(r))} <span class="muted">· ${esc(this._fmt(t.outageGone, r))}</span></li>`)
+            .join("")}</ul><p class="muted">${esc(hint)}</p>`
+        : "";
+    const periods = data.evaluated
+      .map((o) => {
+        const minutes = Math.round((new Date(o.end) - new Date(o.start)) / 60000);
+        const by = (k) => o.entries.filter((r) => r.outcome === k);
+        const confirmed = by("confirmed").length;
+        const body =
+          (confirmed ? `<p>${esc(confirmed === 1 ? t.outageConfirmed1 : this._fmt(t.outageConfirmed, { n: confirmed }))}</p>` : "") +
+          list(by("surprise"), t.outageSurprise, t.outageSurpriseHint) +
+          list(by("kept"), t.outageKept, t.outageKeptHint);
+        return `
+          <div class="pipeline">
+            <h3>${esc(this._fmt(t.outagePeriod, { start: this._when(o.start), minutes }))}</h3>
+            ${body || `<p class="muted">${esc(t.outageNothing)}</p>`}
+            ${o.restarts?.length ? `<p class="muted">${esc(t.outageRestarts)}</p>` : ""}
+          </div>`;
+      })
+      .join("");
+    return `
+      <details class="card" id="outages" open>
+        <summary><h2>${esc(t.outagesTitle)} · ${data.evaluated.length}</h2></summary>
+        ${now}<p class="muted">${esc(t.outagesHint)}</p>
+        ${periods}
+      </details>`;
+  }
+
   _renderEntries() {
     const t = this._t;
     const rows = [...this._entries]
@@ -968,6 +1051,7 @@ class UncloudedPanel extends HTMLElement {
         this._renderAdvice() +
         this._renderVerdicts() +
         this._renderVoice() +
+        this._renderOutages() +
         this._renderEntries();
     else body = `<p class="muted">…</p>`;
     this.shadowRoot.innerHTML = `

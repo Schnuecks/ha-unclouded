@@ -3,6 +3,7 @@
   "name": "Unclouded",
   "after_dependencies": [
     "automation",
+    "recorder",
     "script"
   ],
   "codeowners": [
