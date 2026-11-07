@@ -34,7 +34,12 @@ Ergebnissen kommt. Einen kurzen Überblick und die Installation gibt es in der
 5. **Listen der Automationen**, sortiert danach, was ohne Internet mit ihnen passiert. Jede Automation hat einen Satz zur Begründung, **Öffnen ›** führt in den
    Automationseditor, und **Technische Details** zeigt jeden Auslöser, jede Bedingung und
    jede Aktion, die Internet braucht, mit der Integration dahinter und dem Grund.
-6. **Integrationen:** jede eingerichtete Integration mit ihrer Einstufung und dem Grund.
+6. **Sprachassistent:** jede Assist-Pipeline mit Aktivierungswort, Sprache zu Text,
+   Gesprächsagent und Text zu Sprache, ob jeder Schritt ohne Internet geht, und die
+   Sprachsatelliten, die sie nutzen.
+7. **Echte Ausfälle:** was bei den letzten Ausfällen wirklich nicht erreichbar war, verglichen
+   mit der Einschätzung von Unclouded (siehe unten).
+8. **Integrationen:** jede eingerichtete Integration mit ihrer Einstufung und dem Grund.
 
 Jede Änderung im Panel wird unten im Bild bestätigt.
 
@@ -84,8 +89,14 @@ Unclouded geht die Auslöser, Bedingungen und Aktionen jeder Automation durch un
   Tracker im Heimnetz, etwa vom Router, gilt als lokal,
 - **Benachrichtigungen** bis zur Integration und zu ihrem Zustellweg.
 
-Entity-IDs, die ein Template erst zur Laufzeit bildet, lassen sich nicht verfolgen und werden
-ausgelassen.
+Templates werden nach den Entitäten durchsucht, die sie lesen (`states()`, `state_attr()`,
+`is_state()`, `states.sensor.x` …). Liest ein Template einen Cloud-Wert mit Ersatzwert, etwa
+`float(10)` oder `default(0)`, läuft die Automation ohne Internet weiter, entscheidet aber nach
+dem Ersatzwert; das meldet Unclouded eigens. Entity-IDs, die ein Template erst zur Laufzeit
+bildet, lassen sich nicht verfolgen und werden ausgelassen.
+
+In einer **Oder**-Bedingung hält ein Cloud-Wert die Automation nicht auf, solange ein anderer
+Zweig der Bedingung lokal funktioniert.
 
 ## Wichtige Automationen und Reparaturen
 
@@ -109,14 +120,37 @@ stündlich und nach jeder Änderung im Panel.
 | **Lokalen Push einschalten** | Benachrichtigungen an ein Handy laufen über den Relay-Server. |
 | **Wichtigen Meldungen einen zweiten, lokalen Weg geben** | Eine Automation schickt nur Push-Nachrichten. |
 | **Anwesenheit auch lokal erkennen** | Kommen und Gehen kommt nur von Handys. Sieht eine Router-Integration das Handy schon, wird ihr Eintrag genannt, auch wenn er noch deaktiviert ist. |
-| **Geräte hinter einer Hersteller-Cloud** | Eine Automation hängt an einer Cloud-Integration. |
-| **Durchsagen lokal erzeugen** | Gesprochene Durchsagen erzeugt ein Cloud-Dienst. |
+| **Werte prüfen, die ohne Internet ersetzt werden** | Ein Template liest einen Cloud-Wert mit Ersatzwert. |
+| **Geräte und Dienste aus der Cloud** | Eine Automation hängt an einer Cloud-Integration. Jede wird mit einem bekannten lokalen Weg genannt, falls es einen gibt. |
+| **Durchsagen lokal erzeugen** | Gesprochene Durchsagen erzeugt ein Cloud-Dienst. Feste Sätze spielt Home Assistant aus seinem Zwischenspeicher ab, auch ohne Internet. |
+
+Jeder Vorschlag verlinkt die Seite, auf der du ihn umsetzt, und die betroffenen Automationen
+führen in ihren Editor. Unclouded selbst ändert nichts.
+
+## Echte Ausfälle
+
+Der Sensor **Internet** (`binary_sensor.unclouded_internet`) zeigt, ob Home Assistant das
+Internet erreicht. Einmal pro Minute baut Unclouded eine Verbindung zu den öffentlichen
+DNS-Servern 1.1.1.1 und 9.9.9.9 auf Port 53 auf und schließt sie wieder; gesendet wird nichts.
+Erst wenn zweimal hintereinander keiner antwortet, gilt das Internet als weg. Ausfälle unter
+zwei Minuten werden nicht behalten.
+
+Nach einem Ausfall zeigt das Panel, was in der Zeit wirklich nicht erreichbar war, vom Beginn
+des Ausfalls bis fünf Minuten nach seinem Ende:
+
+- **wie erwartet ausgefallen:** Cloud-Integrationen, deren Entitäten weg waren,
+- **als lokal eingestuft, aber ausgefallen:** ein Hinweis, dass etwas anderes beteiligt war,
+  etwa eine Cloud-Anmeldung oder eine Bridge,
+- **als Cloud eingestuft, lief aber weiter:** nur nach Ausfällen ab 30 Minuten; vielleicht
+  läuft sie doch lokal, oder sie zeigt gespeicherte Werte.
+
+Was rund um einen Neustart von Home Assistant nicht erreichbar war, bleibt außen vor.
 
 ## Fragen
 
 **Trennt Unclouded zum Testen das Internet?** Nein. Es arbeitet mit dem, wie sich
-Integrationen verbinden, und ändert nie etwas. Das Ergebnis ist eine sorgfältige
-Einschätzung, keine Messung.
+Integrationen verbinden, und ändert nie etwas. Das Ergebnis ist eine Einschätzung; nach einem
+echten Ausfall zeigt das Panel, wie gut sie gepasst hat.
 
 **Ein Alarm, der nur eine Benachrichtigung schickt, steht unter „Verlieren nur
 Benachrichtigungen“, obwohl er dann gar nichts tut. Warum?** Weil die Benachrichtigung alles
@@ -127,6 +161,7 @@ gib ihm einen zweiten, lokalen Weg, wie es die Vorschläge beschreiben.
 Integration und ihrer Einrichtung eröffnen.
 
 **Was speichert Unclouded?** Deine Wahl für unbekannte Integrationen und die wichtigen
-Automationen in seinem Config-Eintrag und den zuletzt bekannten Stand jeder Integration in
-`.storage/unclouded.baseline`. Entfernst du Unclouded, verschwinden beide und seine
-Reparaturhinweise.
+Automationen in seinem Config-Eintrag, dazu die Handys, bei denen lokaler Push gesehen
+wurde; den zuletzt bekannten Stand jeder Integration in `.storage/unclouded.baseline`; die
+letzten zehn Ausfälle in `.storage/unclouded.outages`. Entfernst du Unclouded, verschwindet
+all das samt seinen Reparaturhinweisen.

@@ -1,4 +1,4 @@
-<p align="center"><img src="docs/logo.svg" width="96" alt="Unclouded"></p>
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/logo-dark.svg"><img src="docs/logo.svg" width="96" alt="Unclouded"></picture></p>
 
 # Unclouded
 
@@ -11,69 +11,56 @@
   <img src="https://img.shields.io/badge/maintained-yes-4C9A2A" alt="Maintained">
 </p>
 
-Find out what in your Home Assistant still works when the internet is down – and what you
-can do so that the important things keep working.
-
-**New here?** The [guide](docs/guide.md) explains the panel step by step and how Unclouded
-comes to its results.
+Unclouded shows what in your Home Assistant still works when the internet is gone, and
+what you can do about the rest.
 
 <p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/overview-dark.png"><img src="docs/screenshots/overview.png" width="720" alt="Overview and suggestions"></picture></p>
 
-## Why
+## Why I built it
 
-Many devices and services in Home Assistant work through servers on the internet: those of
-the manufacturer, of Apple or Google, or of a cloud service. If the internet is down, the
-provider has an outage or switches its service off, something at home stops working too –
-often something you would not expect. A water leak alarm that only sends a push
-notification is silent without internet. "Everyone left" never fires when the phones cannot
-report their location. A sensor behind a manufacturer's cloud simply stops.
+My Home Assistant runs at home, so I assumed it would carry on without the internet. When I
+actually looked, a lot of it would not. Notifications to my phone went through a relay
+server on the internet. Presence came only from the phones. And a reminder to close the
+bathroom window read the outside temperature from a weather service with a fallback of
+10 °C, so without the internet it would have quietly assumed mild weather every time.
 
-Home Assistant shows for each integration whether it needs the internet, but not what that
-means for your automations. Unclouded works that out for your setup and tells you, in plain
-words, what you can change.
+Home Assistant tells you for each integration whether it uses the cloud. It does not tell
+you what that means for your automations. That is the gap Unclouded fills.
 
-## Features
+## What it does
 
-- **One sentence per automation:** whether it keeps working, only loses its notifications
-  or loses function, and why – for example "Notification to Alex's phone does not arrive".
-- **Suggestions from your setup:** turn on local push, give important alerts a second, local
-  way, detect presence through your router as well (it names the exact entry for each
-  phone), devices behind a manufacturer's cloud, local text-to-speech.
-- **Looks deeper than the integration list:** follows scripts, scenes, groups, template
-  sensors and other helpers to their sources, persons and zones to the phones behind them,
-  and notifications to the way they are delivered.
-- **Knows where the declaration is not enough:** integrations that run locally or through
-  the cloud depending on how they were set up, phones that are local at home and remote
-  when away, push notifications that look local but go through a relay.
-- **Important automations:** mark them with a star, and Home Assistant lists them under
-  Repairs while they depend on the internet.
-- **Notices changes:** if an integration needs the internet after an update when it did not
-  before, a repair issue tells you.
-- **Fills gaps with you:** an integration that does not say how it connects can be classified
-  by you. What Unclouded found out by itself cannot be overruled.
-- **Voice assistant:** checks every Assist pipeline step by step and lists the voice
-  satellites using it.
-- **Values replaced without the internet:** finds templates that read a cloud value with a
-  fallback such as `float(10)`, so the automation quietly decides on the fallback.
-- **Real outages:** a sensor shows whether the internet can be reached. After an outage,
-  Unclouded compares what really became unavailable with its assessment.
-- **Only reads:** Unclouded changes nothing in your setup. The only connection it makes
-  itself is the check whether the internet can be reached (see below).
+Unclouded goes through every automation, follows scripts, scenes, helpers, persons and
+templates down to the integrations behind them, and sorts the automations into keep
+working, only lose their notifications, and lose function. Each one gets a short sentence
+saying why, like "Notification to Alex's phone does not arrive".
+
+On top of that you get suggestions that fit your setup: turn on local push, give important
+alerts a second way that works at home, detect presence through your router as well (it
+names the matching router entry for each phone), and which cloud integrations have a local
+alternative. Each suggestion links straight to the page where you change it.
+
+It also checks your voice assistant pipelines, warns when an integration needs more of the
+internet after an update than before, and lets you star the automations that matter so
+they show up under Repairs. A small sensor watches the connection, and after a real outage
+the panel shows what actually went away, so you can see how good the estimate was.
+
+Unclouded only reads. It never changes your setup.
 
 ## How it works
 
-1. Open **Unclouded** in the sidebar. The overview at the top shows how many automations
-   keep working without the internet and what happens to the others.
-2. **What you can do** lists suggestions, the most useful first, each with why it matters
-   and how to do it.
-3. Below, every automation is listed by what happens to it, with one sentence that says
-   why. **Technical details** shows each trigger, condition and action that needs the
-   internet and the integration behind it.
+1. Open **Unclouded** in the sidebar. The top shows how many automations keep working
+   without the internet.
+2. **What you can do** lists the suggestions, most useful first.
+3. Below, every automation is listed by what happens to it. **Technical details** shows
+   which trigger, condition or action needs the internet and why.
 
-   <picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/automations-dark.png"><img src="docs/screenshots/automations.png" width="640" alt="Automations that work only partly"></picture>
+   <picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/automations-dark.png"><img src="docs/screenshots/automations.png" width="640" alt="Automations that only lose their notifications"></picture>
 
-4. Mark the automations that matter with ★. Home Assistant then reminds you under
+4. Star the automations that matter. Home Assistant then lists them under
    **Settings → Repairs** while they depend on the internet.
+
+The [guide](docs/guide.md) goes through the panel in detail and explains how Unclouded comes
+to its results.
 
 ## Installation
 
@@ -91,21 +78,20 @@ Unclouded**. The panel appears in the sidebar for admins.
 
 ## Good to know
 
-- **It is an estimate, not a test:** Unclouded works from how integrations connect, not by
-  cutting the internet. An integration that declares nothing is shown as unknown until you
-  classify it.
-- **Templates in actions:** entity IDs built by a template at run time cannot be followed and
-  are left out.
-- **Notifications:** with local push turned on in the Companion App, notifications arrive at
-  home without the internet. Unclouded sees that from the Android app's registration, and on
-  iPhones and iPads from the push channel the app keeps open while it is at home.
-- **Internet check:** once a minute Unclouded opens a connection to the public DNS servers
-  1.1.1.1 and 9.9.9.9 on port 53 and closes it again; nothing is sent. Only when neither
-  answers twice in a row does the internet count as down.
-- **Restarts:** what was unavailable around a restart of Home Assistant is left out of the
-  comparison with real outages.
-- **Wrong classification?** Please open an issue with the integration and how it is set up,
-  so it can be fixed for everyone; see [CONTRIBUTING](CONTRIBUTING.md).
+It is an estimate, not a test. Unclouded never cuts your internet; it works from how each
+integration connects. Some integrations run locally or through the cloud depending on how
+they were set up, and Unclouded knows a number of those. If one does not say how it
+connects, you can tell Unclouded yourself.
+
+To notice real outages, Unclouded opens a connection to the public DNS servers 1.1.1.1 and
+9.9.9.9 on port 53 once a minute and closes it again. Nothing is sent. That is the only
+connection it makes.
+
+Entity IDs that a template builds only while the automation runs cannot be followed and are
+left out.
+
+If something is classified wrong, please open an issue with the integration and how it is
+set up, so it gets fixed for everyone. See [CONTRIBUTING](CONTRIBUTING.md).
 
 ## Development
 
