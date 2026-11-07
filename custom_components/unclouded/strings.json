@@ -45,5 +45,12 @@
         }
       }
     }
+  },
+  "entity": {
+    "binary_sensor": {
+      "internet": {
+        "name": "Internet"
+      }
+    }
   }
 }

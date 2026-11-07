@@ -51,8 +51,14 @@ words, what you can change.
   before, a repair issue tells you.
 - **Fills gaps with you:** an integration that does not say how it connects can be classified
   by you. What Unclouded found out by itself cannot be overruled.
-- **Only reads:** Unclouded changes nothing in your setup and does not talk to anything
-  outside Home Assistant.
+- **Voice assistant:** checks every Assist pipeline step by step and lists the voice
+  satellites using it.
+- **Values replaced without the internet:** finds templates that read a cloud value with a
+  fallback such as `float(10)`, so the automation quietly decides on the fallback.
+- **Real outages:** a sensor shows whether the internet can be reached. After an outage,
+  Unclouded compares what really became unavailable with its assessment.
+- **Only reads:** Unclouded changes nothing in your setup. The only connection it makes
+  itself is the check whether the internet can be reached (see below).
 
 ## How it works
 
@@ -91,7 +97,13 @@ Unclouded**. The panel appears in the sidebar for admins.
 - **Templates in actions:** entity IDs built by a template at run time cannot be followed and
   are left out.
 - **Notifications:** with local push turned on in the Companion App, notifications arrive at
-  home without the internet. Unclouded sees that from the phone's registration.
+  home without the internet. Unclouded sees that from the Android app's registration, and on
+  iPhones and iPads from the push channel the app keeps open while it is at home.
+- **Internet check:** once a minute Unclouded opens a connection to the public DNS servers
+  1.1.1.1 and 9.9.9.9 on port 53 and closes it again; nothing is sent. Only when neither
+  answers twice in a row does the internet count as down.
+- **Restarts:** what was unavailable around a restart of Home Assistant is left out of the
+  comparison with real outages.
 - **Wrong classification?** Please open an issue with the integration and how it is set up,
   so it can be fixed for everyone; see [CONTRIBUTING](CONTRIBUTING.md).
 

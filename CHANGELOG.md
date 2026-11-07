@@ -39,3 +39,6 @@ and the project uses [Semantic Versioning](https://semver.org/).
   that condition works locally.
 - Suggestions name integrations instead of entry titles such as station IDs, and cloud
   services like weather are no longer called devices.
+- Real outages: a connectivity sensor checks once a minute whether the internet can be
+  reached. After an outage the panel compares what really became unavailable with the
+  assessment, leaving out restarts of Home Assistant.

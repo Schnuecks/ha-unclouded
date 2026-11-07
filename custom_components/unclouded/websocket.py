@@ -8,11 +8,12 @@ from typing import Any
 import voluptuous as vol
 from homeassistant.components import websocket_api
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.util import dt as dt_util
 
 from .advice import build_advice
 from .analyze import async_analyze_automations
 from .classify import async_can_override, async_classify_entries
-from .const import DOMAIN
+from .const import DOMAIN, WATCHER
 from .push import async_record_local_push
 from .repairs import async_update_issues
 from .settings import (
@@ -36,6 +37,7 @@ def async_register(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_automations)
     websocket_api.async_register_command(hass, ws_set_override)
     websocket_api.async_register_command(hass, ws_set_important)
+    websocket_api.async_register_command(hass, ws_outages)
     hass.data[_REGISTERED] = True
 
 
@@ -70,6 +72,46 @@ async def ws_automations(
             "advice": [asdict(a) for a in build_advice(hass, reports, entries)],
             "voice": [asdict(p) for p in await async_analyze_voice(hass)],
         },
+    )
+
+
+@websocket_api.require_admin
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): f"{DOMAIN}/outages",
+        # A period of the user's choice, e.g. a known outage before Unclouded ran.
+        vol.Optional("start"): str,
+        vol.Optional("end"): str,
+    }
+)
+@websocket_api.async_response
+async def ws_outages(
+    hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
+) -> None:
+    """Return the remembered outages and what happened during the last ones."""
+    if (watcher := hass.data.get(WATCHER)) is None:
+        connection.send_error(msg["id"], "not_set_up", "Unclouded is not set up")
+        return
+    entries = await async_classify_entries(hass, async_get_settings(hass).overrides)
+    periods = [(o["start"], o["end"]) for o in watcher.outages if o["end"]][-3:]
+    if "start" in msg and "end" in msg:
+        periods = [(msg["start"], msg["end"])]
+    evaluated = []
+    for start, end in reversed(periods):
+        start_dt, end_dt = dt_util.parse_datetime(start), dt_util.parse_datetime(end)
+        if start_dt is None or end_dt is None or end_dt <= start_dt:
+            connection.send_error(msg["id"], "invalid_period", "Invalid period")
+            return
+        evaluated.append(
+            {
+                "start": start,
+                "end": end,
+                **await watcher.async_evaluate(start_dt, end_dt, entries),
+            }
+        )
+    connection.send_result(
+        msg["id"],
+        {"online": watcher.online, "outages": watcher.outages, "evaluated": evaluated},
     )
 
 
