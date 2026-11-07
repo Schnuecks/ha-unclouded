@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Unclouded, for dark backgrounds -->
+  <defs><filter id="w"><feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="7"/><feDisplacementMap in="SourceGraphic" scale="9"/></filter></defs>
+  <g filter="url(#w)" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="352" cy="160" r="66" fill="#FFC23D" stroke="#ECEFF1" stroke-width="12"/>
+    <path d="M352 62v-22M450 160h22M420 92l16-16M430 236l14 14" stroke="#ECEFF1" stroke-width="12" fill="none"/>
+    <path d="M70 170c-4-30 30-48 52-30c10-34 62-38 74-6c30-6 46 24 32 44c-20 4-140 6-158-8z" fill="#fff" stroke="#ECEFF1" stroke-width="12"/>
+    <path d="M30 130h28M22 160h20" stroke="#ECEFF1" stroke-width="10" fill="none"/>
+    <path d="M110 300L256 184L404 300V462H110Z" fill="#5EC4F0" stroke="#ECEFF1" stroke-width="14"/>
+    <path d="M226 462V378c0-14 60-14 60 0V462" fill="#FFF3D6" stroke="#ECEFF1" stroke-width="12"/>
+    <path d="M150 340h44v40h-44z" fill="#FFF3D6" stroke="#ECEFF1" stroke-width="10"/>
+  </g>
+</svg>
