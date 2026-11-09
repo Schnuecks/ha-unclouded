@@ -93,10 +93,10 @@ Unclouded**. The panel appears in the sidebar for admins.
 
 ## Good to know
 
-It's an estimate, not a test. Unclouded never cuts your internet – it looks at how each
-integration connects. Some integrations run locally or through the cloud depending on how
-they are set up, and Unclouded knows many of them. If it can't tell for one of your
-integrations, you can set it yourself.
+Unclouded works out what would happen without the internet – it doesn't try it out. It goes
+by how each integration connects: locally or through the cloud. For some integrations that
+depends on how they are set up, and Unclouded knows many of them. If it can't tell for one
+of yours, you can set it yourself.
 
 To notice real outages, Unclouded briefly connects to the public DNS servers 1.1.1.1 and
 9.9.9.9 on port 53 once a minute. It sends no data. This is the only connection it makes

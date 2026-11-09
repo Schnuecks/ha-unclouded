@@ -94,10 +94,10 @@ Unclouded** hinzufügen. Das Panel erscheint für Administratoren in der Seitenl
 
 ## Gut zu wissen
 
-Es ist eine Einschätzung, kein Test. Unclouded trennt nie dein Internet, sondern schaut
-sich an, wie sich jede Integration verbindet. Manche Integrationen laufen je nach Einrichtung
-lokal oder über die Cloud, viele davon kennt Unclouded. Kann es das bei einer deiner
-Integrationen nicht erkennen, legst du es selbst fest.
+Unclouded rechnet aus, was ohne Internet passieren würde – ausprobiert wird dabei nichts.
+Grundlage ist, wie sich jede Integration verbindet: lokal oder über die Cloud. Bei manchen
+Integrationen hängt das von der Einrichtung ab, viele davon kennt Unclouded. Erkennt es das
+bei einer deiner Integrationen nicht, kannst du es selbst festlegen.
 
 Um echte Ausfälle zu bemerken, verbindet sich Unclouded einmal pro Minute kurz mit den
 öffentlichen DNS-Servern 1.1.1.1 und 9.9.9.9 auf Port 53. Daten sendet es dabei nicht. Das
