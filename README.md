@@ -66,9 +66,10 @@ to its results.
 
 Unclouded needs Home Assistant 2026.10 or newer.
 
-**HACS:** in HACS open the menu → **Custom repositories**, add
-`https://github.com/Schnuecks/ha-unclouded` with the type **Integration**, then install
-**Unclouded** and restart Home Assistant.
+**HACS:** use the button or search for **Unclouded** in HACS, then download it and restart
+Home Assistant.
+
+[![Open in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Schnuecks&repository=ha-unclouded&category=integration)
 
 **Manually:** copy `custom_components/unclouded` into the `custom_components` folder of
 your Home Assistant configuration and restart.
