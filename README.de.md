@@ -6,7 +6,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Home%20Assistant-2026.10%2B-41BDF5?logo=homeassistant&logoColor=white" alt="Home Assistant 2026.10+">
-  <img src="https://img.shields.io/badge/HACS-custom-41BDF5" alt="HACS Custom Repository">
+  <img src="https://img.shields.io/badge/HACS-default-41BDF5" alt="In HACS verfügbar">
   <a href="LICENSE"><img src="https://img.shields.io/badge/Lizenz-MIT-4C9A2A" alt="Lizenz MIT"></a>
   <img src="https://img.shields.io/badge/gepflegt-ja-4C9A2A" alt="Gepflegt">
 </p>
@@ -18,34 +18,44 @@ was du für den Rest tun kannst.
 
 ## Warum es das gibt
 
-Mein Home Assistant läuft zu Hause, also bin ich davon ausgegangen, dass er auch ohne
-Internet weitermacht. Als ich genauer hingeschaut habe, war das bei vielem nicht so.
-Benachrichtigungen ans Handy liefen über einen Relay-Server im Internet. Ob jemand zu Hause
-ist, kam nur von den Handys. Und die Erinnerung, das Badfenster zu schließen, holte die
-Außentemperatur von einem Wetterdienst, mit 10 °C als Ersatzwert. Ohne Internet hätte sie
-also jedes Mal still mildes Wetter angenommen.
+Mein Home Assistant läuft zu Hause, also dachte ich, er macht auch ohne Internet weiter.
+Als ich genauer hingeschaut habe, war das bei vielem nicht so:
+
+- Benachrichtigungen ans Handy liefen über einen Server im Internet.
+- Ob jemand zu Hause ist, wusste Home Assistant nur über den Standort der Handys.
+- Die Erinnerung, das Badfenster zu schließen, wenn es draußen kalt wird, holte die
+  Temperatur von einem Wetterdienst im Internet. Ohne Internet wäre sie einfach nie gekommen.
 
 Home Assistant zeigt bei jeder Integration, ob sie die Cloud nutzt. Was das für die eigenen
-Automationen heißt, zeigt es nicht. Genau da setzt Unclouded an.
+Automationen bedeutet, zeigt es nicht. Genau da setzt Unclouded an.
 
 ## Was es macht
 
-Unclouded geht jede Automation durch, folgt Skripten, Szenen, Helfern, Personen und
-Templates bis zu den Integrationen dahinter und sortiert die Automationen danach, ob sie
-weiterlaufen, nur ihre Benachrichtigungen verlieren oder ausfallen. Zu jeder gibt es einen
-kurzen Satz mit dem Grund, etwa „Benachrichtigung an Alex's phone kommt nicht an“.
+Unclouded geht alle deine Automationen durch und verfolgt sie über Skripte, Szenen, Helfer,
+Personen und Templates bis zu den Integrationen dahinter. Dann sortiert es sie in Gruppen:
 
-Dazu kommen Vorschläge, die zu deiner Einrichtung passen: lokalen Push einschalten,
-wichtigen Meldungen einen zweiten Weg geben, der zu Hause funktioniert, Anwesenheit auch über
-den Router erkennen (mit dem passenden Router-Eintrag für jedes Handy) und welche
-Cloud-Integrationen eine lokale Alternative haben. Jeder Vorschlag führt direkt zu der Seite,
-auf der du ihn umsetzt.
+- laufen weiter
+- laufen, aber ihre Benachrichtigungen kommen nicht an
+- fallen ganz oder teilweise aus
 
-Außerdem prüft Unclouded die Pipelines deines Sprachassistenten, meldet, wenn eine
-Integration nach einem Update mehr Internet braucht als vorher, und du kannst wichtige
-Automationen mit einem Stern markieren, damit sie unter Reparaturen auftauchen. Ein kleiner
-Sensor beobachtet die Verbindung, und nach einem echten Ausfall zeigt das Panel, was
-wirklich weg war. So siehst du, wie gut die Einschätzung gepasst hat.
+Zu jeder Automation gibt es einen kurzen Grund, zum Beispiel „Benachrichtigung an Annas
+Handy kommt nicht an“.
+
+Dazu bekommst du Vorschläge, die zu deiner Einrichtung passen, zum Beispiel:
+
+- lokalen Push für die Companion-App einschalten
+- wichtigen Meldungen einen zweiten Weg geben, der ohne Internet funktioniert
+- Anwesenheit zusätzlich über den Router erkennen – Unclouded nennt dir für jedes Handy den
+  passenden Router-Eintrag
+- eine lokale Alternative nutzen, wo es für eine Cloud-Integration eine gibt
+
+Jeder Vorschlag führt direkt zu der Seite, auf der du ihn umsetzt.
+
+Außerdem prüft Unclouded deinen Sprachassistenten, meldet, wenn eine Integration nach einem
+Update stärker vom Internet abhängt als vorher, und du kannst wichtige Automationen mit einem
+Stern markieren, damit sie unter Reparaturen auftauchen. Ein kleiner Sensor behält deine
+Verbindung im Blick. Nach einem echten Ausfall zeigt das Panel, was wirklich ausgefallen
+ist. So siehst du, wie gut die Einschätzung gepasst hat.
 
 Unclouded liest nur. An deiner Einrichtung ändert es nichts.
 
@@ -83,17 +93,20 @@ Unclouded** hinzufügen. Das Panel erscheint für Administratoren in der Seitenl
 
 ## Gut zu wissen
 
-Es ist eine Einschätzung, kein Test. Unclouded trennt nie dein Internet, sondern arbeitet
-damit, wie sich jede Integration verbindet. Manche Integrationen laufen je nach Einrichtung
-lokal oder über die Cloud, und einige davon kennt Unclouded. Sagt eine nicht, wie sie sich
-verbindet, kannst du es Unclouded selbst sagen.
+Unclouded rechnet aus, was ohne Internet passieren würde – ausprobiert wird dabei nichts.
+Grundlage ist, wie sich jede Integration verbindet: lokal oder über die Cloud. Bei manchen
+Integrationen hängt das von der Einrichtung ab, viele davon kennt Unclouded. Erkennt es das
+bei einer deiner Integrationen nicht, kannst du es selbst festlegen.
 
-Um echte Ausfälle zu bemerken, baut Unclouded einmal pro Minute eine Verbindung zu den
-öffentlichen DNS-Servern 1.1.1.1 und 9.9.9.9 auf Port 53 auf und schließt sie wieder.
-Gesendet wird nichts. Das ist die einzige Verbindung, die es selbst aufbaut.
+Um echte Ausfälle zu bemerken, prüft Unclouded einmal pro Minute, ob es zwei öffentliche
+DNS-Server verschiedener Anbieter erreicht: 1.1.1.1 und 9.9.9.9 (Port 53). Erst wenn keiner
+von beiden antwortet, gilt das Internet als weg. So zählt eine Störung bei nur einem
+Anbieter nicht als Ausfall. Unclouded baut dabei nur eine Verbindung auf und schließt sie
+wieder – es fragt nichts ab und sendet keine Daten. Das ist die einzige Verbindung, die es
+selbst aufbaut.
 
-Entity-IDs, die ein Template erst während der Automation bildet, lassen sich nicht verfolgen
-und werden ausgelassen.
+Setzt ein Template eine Entity-ID erst zusammen, während die Automation läuft, kann
+Unclouded sie nicht verfolgen und lässt sie aus.
 
 Ist etwas falsch eingestuft, eröffne bitte ein Issue mit der Integration und ihrer
 Einrichtung, damit es für alle korrigiert wird. Siehe [CONTRIBUTING](CONTRIBUTING.md).
