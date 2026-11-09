@@ -6,7 +6,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Home%20Assistant-2026.10%2B-41BDF5?logo=homeassistant&logoColor=white" alt="Home Assistant 2026.10+">
-  <img src="https://img.shields.io/badge/HACS-custom-41BDF5" alt="HACS custom repository">
+  <img src="https://img.shields.io/badge/HACS-default-41BDF5" alt="Available in HACS">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-4C9A2A" alt="License MIT"></a>
   <img src="https://img.shields.io/badge/maintained-yes-4C9A2A" alt="Maintained">
 </p>
@@ -18,31 +18,45 @@ what you can do about the rest.
 
 ## Why I built it
 
-My Home Assistant runs at home, so I assumed it would carry on without the internet. When I
-actually looked, a lot of it would not. Notifications to my phone went through a relay
-server on the internet. Presence came only from the phones. And a reminder to close the
-bathroom window read the outside temperature from a weather service with a fallback of
-10 °C, so without the internet it would have quietly assumed mild weather every time.
+My Home Assistant runs at home, so I figured it would keep going without the internet. When
+I actually checked, a lot of it didn't:
 
-Home Assistant tells you for each integration whether it uses the cloud. It does not tell
-you what that means for your automations. That is the gap Unclouded fills.
+- Notifications to my phone went through a server on the internet.
+- Whether anyone was home only came from the phones' location.
+- The reminder to close the bathroom window got the outside temperature from an online
+  weather service. Without the internet it would have used a fixed 10 °C instead and never
+  reminded me on a cold day.
+
+Home Assistant shows for every integration whether it uses the cloud. What that means for
+your own automations, it doesn't show. That's where Unclouded comes in.
 
 ## What it does
 
-Unclouded goes through every automation, follows scripts, scenes, helpers, persons and
-templates down to the integrations behind them, and sorts the automations into keep
-working, only lose their notifications, and lose function. Each one gets a short sentence
-saying why, like "Notification to Alex's phone does not arrive".
+Unclouded goes through all your automations and follows them through scripts, scenes,
+helpers, persons and templates down to the integrations behind them. Then it sorts them into
+groups:
 
-On top of that you get suggestions that fit your setup: turn on local push, give important
-alerts a second way that works at home, detect presence through your router as well (it
-names the matching router entry for each phone), and which cloud integrations have a local
-alternative. Each suggestion links straight to the page where you change it.
+- keep working
+- still run, but their notifications don't arrive
+- stop working, completely or in part
 
-It also checks your voice assistant pipelines, warns when an integration needs more of the
-internet after an update than before, and lets you star the automations that matter so
-they show up under Repairs. A small sensor watches the connection, and after a real outage
-the panel shows what actually went away, so you can see how good the estimate was.
+Each automation gets a short reason, for example "Notification to Anna's phone won't
+arrive".
+
+You also get suggestions that fit your setup, for example:
+
+- turn on local push for the companion app
+- give important alerts a second way that works without the internet
+- detect presence through your router as well – Unclouded names the matching router entry
+  for each phone
+- use a local alternative where a cloud integration has one
+
+Each suggestion links straight to the page where you change it.
+
+On top of that, Unclouded checks your voice assistant, tells you when an integration relies
+more on the internet after an update than before, and lets you star important automations
+so they show up under Repairs. A small sensor watches your connection. After a real outage
+the panel shows what actually failed, so you can see how close the estimate was.
 
 Unclouded only reads. It never changes your setup.
 
@@ -79,17 +93,17 @@ Unclouded**. The panel appears in the sidebar for admins.
 
 ## Good to know
 
-It is an estimate, not a test. Unclouded never cuts your internet; it works from how each
+It's an estimate, not a test. Unclouded never cuts your internet – it looks at how each
 integration connects. Some integrations run locally or through the cloud depending on how
-they were set up, and Unclouded knows a number of those. If one does not say how it
-connects, you can tell Unclouded yourself.
+they are set up, and Unclouded knows many of them. If it can't tell for one of your
+integrations, you can set it yourself.
 
-To notice real outages, Unclouded opens a connection to the public DNS servers 1.1.1.1 and
-9.9.9.9 on port 53 once a minute and closes it again. Nothing is sent. That is the only
-connection it makes.
+To notice real outages, Unclouded briefly connects to the public DNS servers 1.1.1.1 and
+9.9.9.9 on port 53 once a minute. It sends no data. This is the only connection it makes
+itself.
 
-Entity IDs that a template builds only while the automation runs cannot be followed and are
-left out.
+If a template only puts together an entity ID while the automation is running, Unclouded
+can't follow it and leaves it out.
 
 If something is classified wrong, please open an issue with the integration and how it is
 set up, so it gets fixed for everyone. See [CONTRIBUTING](CONTRIBUTING.md).
