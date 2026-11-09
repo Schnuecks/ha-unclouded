@@ -23,9 +23,8 @@ Als ich genauer hingeschaut habe, war das bei vielem nicht so:
 
 - Benachrichtigungen ans Handy liefen über einen Server im Internet.
 - Ob jemand zu Hause ist, wusste Home Assistant nur über den Standort der Handys.
-- Die Erinnerung, das Badfenster zu schließen, holte die Außentemperatur von einem
-  Wetterdienst im Internet. Ohne Internet hätte sie stattdessen fest mit 10 °C gerechnet und
-  mich an kalten Tagen nie erinnert.
+- Die Erinnerung, das Badfenster zu schließen, wenn es draußen kalt wird, holte die
+  Temperatur von einem Wetterdienst im Internet. Ohne Internet wäre sie einfach nie gekommen.
 
 Home Assistant zeigt bei jeder Integration, ob sie die Cloud nutzt. Was das für die eigenen
 Automationen bedeutet, zeigt es nicht. Genau da setzt Unclouded an.

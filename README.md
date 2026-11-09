@@ -23,9 +23,8 @@ I actually checked, a lot of it didn't:
 
 - Notifications to my phone went through a server on the internet.
 - Whether anyone was home only came from the phones' location.
-- The reminder to close the bathroom window got the outside temperature from an online
-  weather service. Without the internet it would have used a fixed 10 °C instead and never
-  reminded me on a cold day.
+- The reminder to close the bathroom window when it gets cold outside took the temperature
+  from an online weather service. Without the internet it would simply never have come.
 
 Home Assistant shows for every integration whether it uses the cloud. What that means for
 your own automations, it doesn't show. That's where Unclouded comes in.
