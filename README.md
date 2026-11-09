@@ -97,9 +97,11 @@ by how each integration connects: locally or through the cloud. For some integra
 depends on how they are set up, and Unclouded knows many of them. If it can't tell for one
 of yours, you can set it yourself.
 
-To notice real outages, Unclouded briefly connects to the public DNS servers 1.1.1.1 and
-9.9.9.9 on port 53 once a minute. It sends no data. This is the only connection it makes
-itself.
+To notice real outages, Unclouded checks once a minute whether it can reach two public DNS
+servers from different providers, 1.1.1.1 and 9.9.9.9 (port 53). Only when neither answers
+does it count the internet as down, so a problem at one provider doesn't look like an
+outage. It just opens a connection and closes it again – no DNS lookups, no data sent. This
+is the only connection Unclouded makes itself.
 
 If a template only puts together an entity ID while the automation is running, Unclouded
 can't follow it and leaves it out.
